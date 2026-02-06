@@ -4,6 +4,11 @@ This project demonstrates the performance optimization of an FPGA-based Nios II 
 
 It implements a hardware-accelerated arithmetic unit for high-speed calculation and uses DMA for efficient memory-to-memory data transfer, offloading tasks from the CPU.
 
+## Design Journey (Documentation)
+For a deep dive into the implementation details, including design rationale, timing analysis, and pipeline logic, please refer to the history documents:
+*   [🇺🇸 **English: Implementation Journey**](./history.md)
+*   [🇰🇷 **Korean: FPGA 프로젝트 검증 (한글)**](./history_kor.md)
+
 ## Project Overview
 
 ### Key Features
