@@ -97,4 +97,57 @@ module stream_processor (
     assign aso_valid = stage_valid[NUM_STAGES-1];
     assign aso_data  = stage_data[NUM_STAGES-1][31:0];
 
+    /*
+    // --------------------------------------------------------
+    // REFERENCE: 2-Stage Manual Implementation
+    // --------------------------------------------------------
+    // This is how the logic looks without "generate" loop.
+    // Useful for understanding the "valid-ready" handshake pattern.
+    
+    // Stage 1 Registers
+    reg [63:0] s1_product; 
+    reg        s1_valid;
+
+    // Stage 2 Registers
+    reg [31:0] s2_result;
+    reg        s2_valid;
+
+    // Handshake Logic
+    // enable[i] = (Empty) || (Next Stage Ready)
+    wire s1_enable = (!s1_valid) || ( (!s2_valid) || aso_ready ); 
+    wire s2_enable = (!s2_valid) || aso_ready;
+
+    // Input Ready
+    assign asi_ready = s1_enable;
+
+    // Stage 1: Capture Input -> Multiply
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            s1_valid   <= 1'b0;
+            s1_product <= 64'd0;
+        end else if (s1_enable) begin
+            s1_valid   <= asi_valid;
+            if (asi_valid) begin
+                s1_product <= (asi_data * coeff_a);
+            end
+        end
+    end
+
+    // Stage 2: Shift-Add Division (/400)
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            s2_valid  <= 1'b0;
+            s2_result <= 32'd0;
+        end else if (s2_enable) begin
+            s2_valid <= s1_valid;
+            if (s1_valid) begin
+                s2_result <= ((s1_product << 10) + (s1_product << 8) + (s1_product << 5) - s1_product) >> 19;
+            end
+        end
+    end
+
+    assign aso_valid = s2_valid;
+    assign aso_data  = s2_result;
+    */
+
 endmodule
