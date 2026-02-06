@@ -107,6 +107,24 @@ $$ 1311 = 1024 + 256 + 32 - 1 = (2^{10} + 2^8 + 2^5 - 2^0) $$
     end
 ```
 
+### Timing Issue Analysis & Optimization
+
+During the initial implementation, we encountered a **Setup Time Violation (Timing Error)**. Here is an analysis of the cause and solution.
+
+#### Cause: Critical Path of the Divider
+In hardware, **division (`/`)** has a much deeper combinational logic depth compared to addition or multiplication.
+*   We attempted to perform 32-bit division within a **single clock cycle**.
+*   The signal propagation delay (Data Path Delay) through the divider circuit exceeded the clock period (e.g., 20ns for 50MHz).
+*   This caused a **Setup Time Violation**, where data failed to reach the register in time.
+
+#### Solution: Shift-Add Approximation
+While the FPGA's **DSP blocks (Multipliers)** are fast, dividers are slow. We resolved the timing issue by converting the division into **multiplication and shift operations**.
+
+*   **Before**: `Result = (A * B) / 400` (Using Divider -> Slow, Timing Error)
+*   **After**: `Result = ((A * B) * 1311) >> 19` (Using Multiplier + Shift -> Fast, Timing Pass)
+
+This change significantly reduced the Critical Path, eliminating the timing violation and allowing operation at 50MHz or higher.
+
 ---
 
 ## Chapter 3: System Integration
@@ -188,6 +206,58 @@ The system is designed to move processing data seamlessly:
 
 ![Qsys System Integration](./images/image_qsys.png)
 *(Figure: Qsys System View showing Nios II, On-Chip Memory, SG-DMA, and Custom Slave connectivity)*
+
+### Evolution: Modular SGDMA
+
+To perform calculations **during** data movement (i.e., `(Data * A) / 400`), a single Memory-to-Memory DMA block is insufficient because we need to insert our `stream_processor` into the data path.
+
+We adopted the **Modular SGDMA** architecture, which disaggregates the DMA into separate functional blocks for flexible connectivity.
+
+#### Architecture Change
+*   **Existing (Standard SGDMA)**: Read and Write masters are tightly coupled internally. (Good for copy only)
+*   **New (Modular SGDMA)**: Split into 3 independent components.
+    1.  **mSGDMA Dispatcher**: Receives commands (Descriptors) from Nios II and controls the masters.
+    2.  **mSGDMA Read Master**: Reads data from memory and outputs it via an **Avalon-ST Source**.
+    3.  **mSGDMA Write Master**: Receives data via an **Avalon-ST Sink** and writes it to memory.
+
+#### Platform Designer Implementation Guide
+In Platform Designer (Qsys), we configured the streaming pipeline as follows:
+
+1.  **Add Components**:
+    *   `Modular SGDMA Dispatcher`: Connect CSR to Nios II Data Master.
+    *   `Modular SGDMA Read Master`: Connect MM-Master to Source Memory, ST-Source to Processor.
+    *   `Modular SGDMA Write Master`: Connect MM-Master to Dest Memory, ST-Sink to Processor.
+2.  **Connect Stream Processor (The Core)**:
+    *   `Read Master.Source` connects to `Stream Processor.Sink`
+    *   `Stream Processor.Source` connects to `Write Master.Sink`
+    *   By doing this, data read from memory MUST pass through our hardware logic before being written back.
+
+### Streaming Pipeline Control (Valid-Ready Handshake)
+
+The core of the **Stream Processor** (`stream_processor.v`) design using the Avalon-Streaming interface is flow control (Backpressure).
+
+Even as pipeline stages increase, the data transfer decision (`enable`) for each stage follows a simple yet powerful rule determined by 3 factors:
+
+1.  **Current Valid (`s1_valid`)**: Do I have data?
+2.  **Next Valid (`s2_valid`)**: Is the next stage full?
+3.  **Output Ready (`aso_ready`)**: Can the final output leave?
+
+#### Pipeline Control Logic
+
+```verilog
+// Condition to pass data to the next stage (Handshake)
+wire s1_enable = (!s1_valid) || ( (!s2_valid) || aso_ready ); 
+```
+
+This formula handles all scenarios:
+
+| Scenario | State Description | Action (`enable`) | Result |
+| :--- | :--- | :--- | :--- |
+| **1. Empty** | `s1_valid=0` | **Enable** | Slot is empty, accept new data. |
+| **2. Flowing** | `s1` Full, `s2` Empty | **Enable** | Push `s1` data to `s2`, accept new data. |
+| **3. Full** | `s1` Full, `s2` Full | Depends on `aso_ready` | If output leaves (`ready=1`), shift all. If blocked (`ready=0`), Stall all. |
+
+This structure allows the pipeline to scale to any length using the same recursive formula (`enable[i] = !valid[i] || enable[i+1]`), ensuring correct data flow without needing FIFOs.
 
 ---
 
