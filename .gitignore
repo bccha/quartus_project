@@ -1,0 +1,53 @@
+# Quartus II & Qsys Database/Output
+/db/
+/incremental_db/
+/output_files/
+/simulation/
+/greybox_tmp/
+/.qsys_edit/
+
+# Generated HDL for Qsys (assuming .qsys file is tracked)
+/custom_inst_qsys/
+
+# Quartus Temporary/Log Files
+*.bak
+*.qws
+*.done
+*.rpt
+*.summary
+*.smsg
+*.pin
+*.jdi
+*.sopc_builder_log.txt
+*.ddb
+
+# Programming Files (Optional: keep .sof if you want binary in repo)
+*.sof
+*.pof
+
+# Nios II Software - Workspace & IDE
+.metadata/
+.project
+.cproject
+.settings/
+*.launch
+
+# Nios II Software - BSP (Generated from .sopcinfo)
+/software/cust_inst/
+
+# Nios II Software - Application Build Artifacts
+/software/*/obj/
+/software/*/*.elf
+/software/*/*.map
+/software/*/*.objdump
+/software/*/*.srec
+/software/*/Makefile
+/software/*/public.mk
+
+# VS Code Local Configuration
+.vscode/
+
+# OS System Files
+Thumbs.db
+Desktop.ini
+.DS_Store
