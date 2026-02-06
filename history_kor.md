@@ -103,16 +103,35 @@ $$
             // [Cycle 1] 하드웨어 곱셈
             mult_stage <= 64'd1 * dataa * datab;
             
-            // [Cycle 2] 최적화: 제산기 대신 Shift-Add 사용
+    // [Cycle 2] 최적화: 제산기 대신 Shift-Add 사용
             // 로직: (val * 1311) >> 19
             result <= ((mult_stage << 10) + (mult_stage << 8) + (mult_stage << 5) - mult_stage) >> 19;      
         end
     end
 ```
 
+### 타이밍 에러 분석 및 최적화
+
+초기 구현 당시 **Setup Time Violation (Timing Error)**가 발생했습니다. 이 문제의 원인과 해결 방법을 분석한 내용은 다음과 같습니다.
+
+#### 문제 원인: 나눗셈기(Divider)의 Critical Path
+하드웨어에서 **나눗셈(`/`) 연산**은 덧셈이나 곱셈에 비해 회로 깊이(Combinational Logic Depth)가 매우 깊습니다.
+*   32비트 나눗셈을 **단일 클럭(1 Cycle)** 내에 처리하려고 시도했습니다.
+*   나눗셈 회로를 거치는 신호 지연 시간(Data Path Delay)이 클럭 주기(예: 50MHz, 20ns)를 초과해버렸습니다.
+*   이로 인해 레지스터에 데이터가 제시간에 도착하지 못하는 **Setup Time Violation**이 발생했습니다.
+
+#### 해결 방법: Shift-Add 근사 연산
+FPGA 내부의 **DSP 블록(Multiplier)**은 매우 빠르지만, 나눗셈기는 느립니다. 따라서 나눗셈을 **곱셈과 시프트 연산**으로 변환하여 Timing 문제를 해결했습니다.
+
+*   **Before**: `Result = (A * B) / 400` (나눗셈기 사용 -> 느림, Timing Error)
+*   **After**: `Result = ((A * B) * 1311) >> 19` (곱셈기 + 시프트 -> 빠름, Timing Pass)
+
+이 변경을 통해 Critical Path를 대폭 단축시켜 Timing Violation을 해결하고, 50MHz 이상의 동작 속도를 확보할 수 있었습니다.
+
 ---
 
 ## 챕터 3: 시스템 통합
+
 
 ### 최상위 모듈 연결 (Top-Level Wiring)
 마지막으로, 이 모듈들은 최상위 엔티티에서 하나로 합쳐집니다. Platform Designer가 생성한 `custom_inst_qsys` 시스템이 두뇌 역할을 하고, 우리의 커스텀 HDL 모듈들이 근육 역할을 수행합니다.
@@ -191,6 +210,33 @@ Nios II 프로세서가 다재다능하긴 하지만, 대용량 버퍼 데이터
 
 ![Qsys 시스템 통합](./images/image_qsys.png)
 *(그림: Nios II, On-Chip Memory, SG-DMA, 커스텀 슬레이브 간의 연결을 보여주는 Qsys 시스템 뷰)*
+
+### 스트리밍 파이프라인 제어 (Valid-Ready Handshake)
+
+Avalon-Streaming 인터페이스를 사용한 **Stream Processor**(`stream_processor.v`) 설계의 핵심은 데이터 흐름 제어(Backpressure)입니다.
+
+파이프라인 스테이지가 길어져도 각 단계의 데이터 전송 여부(`enable`)는 다음 3가지 요소의 조합으로 결정되는 단순하고 강력한 규칙을 따릅니다:
+
+1.  **Current Valid (`s1_valid`)**: 나에게 데이터가 있는가?
+2.  **Next Valid (`s2_valid`)**: 다음 단계가 꽉 찼는가?
+3.  **Output Ready (`aso_ready`)**: 최종 출력이 나갈 수 있는가?
+
+#### 파이프라인 제어 논리
+
+```verilog
+// 다음 단계로 데이터를 넘길 수 있는 조건 (Handshake)
+wire s1_enable = (!s1_valid) || ( (!s2_valid) || aso_ready ); 
+```
+
+이 식은 다음과 같은 시나리오를 모두 처리합니다:
+
+| 시나리오 | 상태 설명 | 동작 (`enable`) | 결과 |
+| :--- | :--- | :--- | :--- |
+| **1. 빈 상태** | `s1_valid=0` | **Enable** | 빈자리이므로 새 데이터를 받음. |
+| **2. 흐르는 상태** | `s1`참, `s2`빔 | **Enable** | `s1` 데이터를 `s2`로 밀어내고, 새 데이터를 받음. |
+| **3. 꽉 찬 상태** | `s1`참, `s2`참 | `aso_ready`에 의존 | 출력이 나가면(`ready=1`) 전체가 한 칸씩 이동. 출력이 막히면(`ready=0`) 전체 Stall. |
+
+이 구조는 파이프라인 단계(Stage)가 아무리 늘어나도 동일한 점화식(`enable[i] = !valid[i] || enable[i+1]`)으로 확장 가능하며, FIFO 없이도 정확한 데이터 흐름을 보장합니다.
 
 ---
 
@@ -333,29 +379,4 @@ void start_dma_transfer() {
 위 결과 이미지에서 볼 수 있듯이, 동일한 연산에 대해 Custom Instruction을 사용한 하드웨어 연산(HW Cycles)이 소프트웨어 연산(SW Cycles)보다 훨씬 적은 사이클을 소모하며, 이를 통해 확실한 가속 효과를 입증했습니다.
 
 
-### 6. 스트리밍 파이프라인 제어 (Valid-Ready Handshake)
 
-Avalon-Streaming 인터페이스를 사용한 **Stream Processor**(`stream_processor.v`) 설계의 핵심은 데이터 흐름 제어(Backpressure)입니다.
-
-파이프라인 스테이지가 길어져도 각 단계의 데이터 전송 여부(`enable`)는 다음 3가지 요소의 조합으로 결정되는 단순하고 강력한 규칙을 따릅니다:
-
-1.  **Current Valid (`s1_valid`)**: 나에게 데이터가 있는가?
-2.  **Next Valid (`s2_valid`)**: 다음 단계가 꽉 찼는가?
-3.  **Output Ready (`aso_ready`)**: 최종 출력이 나갈 수 있는가?
-
-#### 파이프라인 제어 논리
-
-```verilog
-// 다음 단계로 데이터를 넘길 수 있는 조건 (Handshake)
-wire s1_enable = (!s1_valid) || ( (!s2_valid) || aso_ready ); 
-```
-
-이 식은 다음과 같은 시나리오를 모두 처리합니다:
-
-| 시나리오 | 상태 설명 | 동작 (`enable`) | 결과 |
-| :--- | :--- | :--- | :--- |
-| **1. 빈 상태** | `s1_valid=0` | **Enable** | 빈자리이므로 새 데이터를 받음. |
-| **2. 흐르는 상태** | `s1`참, `s2`빔 | **Enable** | `s1` 데이터를 `s2`로 밀어내고, 새 데이터를 받음. |
-| **3. 꽉 찬 상태** | `s1`참, `s2`참 | `aso_ready`에 의존 | 출력이 나가면(`ready=1`) 전체가 한 칸씩 이동. 출력이 막히면(`ready=0`) 전체 Stall. |
-
-이 구조는 파이프라인 단계(Stage)가 아무리 늘어나도 동일한 점화식(`enable[i] = !valid[i] || enable[i+1]`)으로 확장 가능하며, FIFO 없이도 정확한 데이터 흐름을 보장합니다.
