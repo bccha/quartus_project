@@ -34,81 +34,67 @@ module stream_processor (
     end
 
     // --------------------------------------------------------
-    // Pipeline Logic
-    // Stage 1: Multiplication (Input * A)
-    // Stage 2: Division (Shift-Add Approximation for /400)
+    // Generalized Pipeline Logic
     // --------------------------------------------------------
+    // Define Stages:
+    // Stage 0: Input Capture & Multiply (Input * A)
+    // Stage 1: Division (Shift-Add)
+    localparam NUM_STAGES = 2;
 
-    // Backpressure control:
-    // We can accept input if output is ready, OR if we have bubble space.
-    // To simplify simple pipelining, we often stall input if output stalls.
-    // However, with multi-stage, we need careful valid/ready handling.
-    // Here, we use a simple "stall all" approach: if output not ready, stall everything.
+    reg  [63:0] stage_data  [0:NUM_STAGES-1]; // Data for each stage
+    reg         stage_valid [0:NUM_STAGES-1]; // Valid for each stage
+    wire        stage_enable[0:NUM_STAGES-1]; // Enable for each stage
 
-    wire pipeline_ready = aso_ready; // Simple forward pressure
+    // Recursive Enable Logic (Backpressure)
+    // enable[i] = (!valid[i]) || enable[i+1]
+    // The last stage's "next enable" is the output ready signal (aso_ready)
     
-    // Assign Input Ready
-    // We are ready for input if the pipeline is moving (output is ready or pipeline is empty - simplifying to output ready for safety)
-    // A more robust pipeline would check internal bubble states, but for mSGDMA, robust ready handling is preferred.
-    // Let's implement a register-to-register pipeline with valid signals.
+    genvar i;
+    generate
+        for (i = 0; i < NUM_STAGES; i = i + 1) begin : pipe_ctrl
+            if (i == NUM_STAGES - 1) begin
+                // Last Stage: Next enable is Output Ready
+                assign stage_enable[i] = (!stage_valid[i]) || aso_ready;
+            end else begin
+                // Typical Stage: Next enable is the next stage's enable signal
+                // Note: enable[i+1] effectively means "next stage is ready to accept"
+                // Actually, the formula is: enable[i] = (!valid[i]) || ( (!valid[i+1]) || enable[i+1_next] )
+                // Which simplifies to: enable[i] = (!valid[i]) || stage_enable[i+1];
+                assign stage_enable[i] = (!stage_valid[i]) || stage_enable[i+1];
+            end
+        end
+    endgenerate
 
-    reg [31:0] s1_data;   // Stage 1 Result (Input * A) - technically 64-bit needed? 
-    // Wait, Input is 32-bit, A is 32-bit. Result is 64-bit.
-    reg [63:0] s1_product; 
-    reg        s1_valid;
-
-    reg [31:0] s2_result; // Stage 2 Result (Final)
-    reg        s2_valid;
-
-    // Sink Ready Logic:
-    // We are ready if S1 is invalid (empty) OR if S1 is moving to S2 (S2 ready/moving).
-    // Let's use a standard pipeline structure.
-    
-    // NOTE: Simple pipeline without FIFOs can lock up if not careful. 
-    // Strategy: Only advance if downstream is ready.
-    
-    wire s1_enable = (!s1_valid) || ( (!s2_valid) || aso_ready ); 
-    // Logic: Enable S1 capture if:
-    // 1. S1 is empty (can accept new)
-    // 2. OR S1 can move to S2 (S2 is empty OR S2 can output)
-
-    assign asi_ready = s1_enable;
-
-    // Stage 1: Capture Input -> Multiply
+    // Datapath & Valid Logic
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            s1_valid   <= 1'b0;
-            s1_product <= 64'd0;
-        end else if (s1_enable) begin
-            s1_valid   <= asi_valid; // Capture valid state
-            if (asi_valid) begin
-                s1_product <= (asi_data * coeff_a); // 32x32=64 mult
+            stage_valid[0] <= 1'b0;
+            stage_valid[1] <= 1'b0;
+            stage_data[0]  <= 64'd0;
+            stage_data[1]  <= 64'd0;
+        end else begin
+            // Stage 0: Input -> Multiply
+            if (stage_enable[0]) begin
+                stage_valid[0] <= asi_valid;
+                if (asi_valid) begin
+                    stage_data[0] <= (asi_data * coeff_a); // 32x32=64 mult
+                end
+            end
+
+            // Stage 1: Multiply -> Divide
+            if (stage_enable[1]) begin
+                stage_valid[1] <= stage_valid[0];
+                if (stage_valid[0]) begin
+                     // shift-add from stage 0 result
+                     stage_data[1] <= ((stage_data[0] << 10) + (stage_data[0] << 8) + (stage_data[0] << 5) - stage_data[0]) >> 19;
+                end
             end
         end
     end
 
-    // Stage 2: Shift-Add Division (/400)
-    // Trigger condition: S1 is valid. We move S1->S2 if S2 is enabled.
-    
-    wire s2_enable = (!s2_valid) || aso_ready;
-
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            s2_valid  <= 1'b0;
-            s2_result <= 32'd0;
-        end else if (s2_enable) begin
-            s2_valid <= s1_valid;
-            if (s1_valid) begin
-                // Logic from my_multi_calc.v:
-                // ((mult_stage << 10) + (mult_stage << 8) + (mult_stage << 5) - mult_stage) >> 19
-                // Here, mult_stage is s1_product
-                s2_result <= ((s1_product << 10) + (s1_product << 8) + (s1_product << 5) - s1_product) >> 19;
-            end
-        end
-    end
-
-    // Output Assignment
-    assign aso_valid = s2_valid;
-    assign aso_data  = s2_result;
+    // Interface Assignments
+    assign asi_ready = stage_enable[0];
+    assign aso_valid = stage_valid[NUM_STAGES-1];
+    assign aso_data  = stage_data[NUM_STAGES-1][31:0];
 
 endmodule
