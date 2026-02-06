@@ -323,7 +323,7 @@ void start_dma_transfer() {
 
 이 셋업은 무거운 산술 연산을 로직으로 옮김으로써 얻을 수 있는 속도 향상에 대한 확실한 데이터를 제공합니다.
 
-### 4. 성능 측정 결과
+### 5. 성능 측정 결과
 
 실제 하드웨어에서 테스트를 수행한 결과는 다음과 같습니다:
 
@@ -333,7 +333,7 @@ void start_dma_transfer() {
 위 결과 이미지에서 볼 수 있듯이, 동일한 연산에 대해 Custom Instruction을 사용한 하드웨어 연산(HW Cycles)이 소프트웨어 연산(SW Cycles)보다 훨씬 적은 사이클을 소모하며, 이를 통해 확실한 가속 효과를 입증했습니다.
 
 
-### 5. 스트리밍 파이프라인 제어 (Valid-Ready Handshake)
+### 6. 스트리밍 파이프라인 제어 (Valid-Ready Handshake)
 
 Avalon-Streaming 인터페이스를 사용한 **Stream Processor**(`stream_processor.v`) 설계의 핵심은 데이터 흐름 제어(Backpressure)입니다.
 
