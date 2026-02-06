@@ -332,3 +332,30 @@ void start_dma_transfer() {
 
 위 결과 이미지에서 볼 수 있듯이, 동일한 연산에 대해 Custom Instruction을 사용한 하드웨어 연산(HW Cycles)이 소프트웨어 연산(SW Cycles)보다 훨씬 적은 사이클을 소모하며, 이를 통해 확실한 가속 효과를 입증했습니다.
 
+
+### 5. 스트리밍 파이프라인 제어 (Valid-Ready Handshake)
+
+Avalon-Streaming 인터페이스를 사용한 **Stream Processor**(`stream_processor.v`) 설계의 핵심은 데이터 흐름 제어(Backpressure)입니다.
+
+파이프라인 스테이지가 길어져도 각 단계의 데이터 전송 여부(`enable`)는 다음 3가지 요소의 조합으로 결정되는 단순하고 강력한 규칙을 따릅니다:
+
+1.  **Current Valid (`s1_valid`)**: 나에게 데이터가 있는가?
+2.  **Next Valid (`s2_valid`)**: 다음 단계가 꽉 찼는가?
+3.  **Output Ready (`aso_ready`)**: 최종 출력이 나갈 수 있는가?
+
+#### 파이프라인 제어 논리
+
+```verilog
+// 다음 단계로 데이터를 넘길 수 있는 조건 (Handshake)
+wire s1_enable = (!s1_valid) || ( (!s2_valid) || aso_ready ); 
+```
+
+이 식은 다음과 같은 시나리오를 모두 처리합니다:
+
+| 시나리오 | 상태 설명 | 동작 (`enable`) | 결과 |
+| :--- | :--- | :--- | :--- |
+| **1. 빈 상태** | `s1_valid=0` | **Enable** | 빈자리이므로 새 데이터를 받음. |
+| **2. 흐르는 상태** | `s1`참, `s2`빔 | **Enable** | `s1` 데이터를 `s2`로 밀어내고, 새 데이터를 받음. |
+| **3. 꽉 찬 상태** | `s1`참, `s2`참 | `aso_ready`에 의존 | 출력이 나가면(`ready=1`) 전체가 한 칸씩 이동. 출력이 막히면(`ready=0`) 전체 Stall. |
+
+이 구조는 파이프라인 단계(Stage)가 아무리 늘어나도 동일한 점화식(`enable[i] = !valid[i] || enable[i+1]`)으로 확장 가능하며, FIFO 없이도 정확한 데이터 흐름을 보장합니다.
