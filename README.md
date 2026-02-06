@@ -55,6 +55,27 @@ The software (`main.c`) performs two primary benchmarks:
     *   Comparing `C Software Division` vs `Hardware Custom Instruction`.
     *   Uses high-resolution hardware timers (`alt_timestamp`) for cycle-accurate measurement.
 
+## Streaming Acceleration Integration (New)
+
+To use the `stream_processor` for inline data processing (`(Data * A) / 400`), the Qsys system must be reconfigured using **Modular SGDMA**.
+
+### Platform Designer (Qsys) Setup
+1.  **Add Component**: Import `RTL/stream_processor.v` as a new component.
+    *   Interfaces: `asi` (Sink), `aso` (Source), `avs` (Control Slave).
+2.  **Modular SGDMA Architecture**:
+    *   Replace standard SGDMA with 3 separate modules:
+        *   **mSGDMA Dispatcher**: Connects to Nios II.
+        *   **mSGDMA Read Master**: Reads from Memory -> Sends to Stream.
+        *   **mSGDMA Write Master**: Receives from Stream -> Writes to Memory.
+3.  **Connections**:
+    *   `Read Master (Source)` -> `Stream Processor (Sink)`
+    *   `Stream Processor (Source)` -> `Write Master (Sink)`
+    *   `Nios II (Data Master)` -> `Stream Processor (avs)` (To set Coefficient A).
+
+### Address Map
+*   **Stream Processor CSR**: Base Address (e.g., `0x0008_1000`)
+    *   Offset `0x0`: Coefficient A (RW)
+
 ## Performance Results
 
 Our benchmarking results demonstrate substantial improvements:
