@@ -6,7 +6,8 @@
 
 #include "alt_types.h"
 #include "altera_msgdma.h"
-#include <sys/alt_cache.h> // For cache flush functions
+#include "altera_msgdma_csr_regs.h" // For busy bit polling
+#include <sys/alt_cache.h>          // For cache flush functions
 
 // Constants
 #define DATA_SIZE 256
@@ -132,17 +133,40 @@ void compare_transfer_speed() {
   // c. Start Transfer
   alt_msgdma_standard_descriptor_async_transfer(dma_dev, &descriptor);
 
-  // Measure "CPU Overhead" needed to set up and launch DMA
-  alt_u64 time_dma = alt_timestamp() - start;
+  // Measure "Launch Overhead" (Time to set up and start DMA)
+  alt_u64 time_launch = alt_timestamp() - start;
+
+  // d. Wait for Transfer to Complete (Busy polling)
+  while (IORD_ALTERA_MSGDMA_CSR_STATUS(dma_dev->csr_base) &
+         ALTERA_MSGDMA_CSR_BUSY_MASK)
+    ;
+
+  // Measure Total Time (Setup + Launch + Wait)
+  alt_u64 time_total = alt_timestamp() - start;
+
+  // e. Verify Data
+  int error_count = 0;
+  for (int i = 0; i < DATA_SIZE; i++) {
+    int dp = IORD(DEST_ADDR_BASE, i);
+    if (src_data[i] != dp) {
+      error_count++;
+    }
+  }
 
   printf("Dataset: %d Words (%d Bytes)\n", DATA_SIZE, (int)sizeof(src_data));
-  printf("1. CPU Copy Cycles  : %llu\n", time_cpu);
-  printf("2. DMA Overhead Cycles: %llu\n", time_dma);
+  printf("1. CPU Copy Cycles    : %llu\n", time_cpu);
+  printf("2. DMA Launch Overhead: %llu\n", time_launch);
+  printf("3. DMA Total Cycles   : %llu\n", time_total);
 
-  if (time_dma > 0) {
-    printf(">> CPU Offload Ratio : %.2fx\n", (float)time_cpu / (float)time_dma);
+  if (error_count == 0) {
+    printf("   [DMA Data Verification: PASS]\n");
   } else {
-    printf(">> DMA Overhead is negligible (0 cycles measured)\n");
+    printf("   [DMA Data Verification: FAIL - %d errors]\n", error_count);
+  }
+
+  if (time_total > 0) {
+    printf(">> CPU Offload Ratio (Total) : %.2fx\n",
+           (float)time_cpu / (float)time_total);
   }
 }
 
@@ -222,7 +246,7 @@ int main() {
   }
 
   // Optional: Run full DMA transfer validation
-  // start_dma_transfer();
+  start_dma_transfer();
 
   return 0;
 }
