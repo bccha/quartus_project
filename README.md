@@ -9,7 +9,7 @@ It implements a hardware-accelerated arithmetic unit for high-speed calculation 
 ### Key Features
 1.  **Custom Instruction Unit**:
     *   Optimized hardware logic for specific arithmetic (`(A * B) / 400`).
-    *   Replaces software division with hardware shift-add operations (`(A * 1311) >> 19`).
+    *   **Timing Optimization**: Replaces slow hardware division with shift-add operations (`(A * 1311) >> 19`) to resolve Setup Time Violations.
     *   Achieves significant cycle reduction compared to software implementation.
 
 2.  **Custom Avalon-MM Slave**:
@@ -75,6 +75,11 @@ To use the `stream_processor` for inline data processing (`(Data * A) / 400`), t
 ### Address Map
 *   **Stream Processor CSR**: Base Address (e.g., `0x0008_1000`)
     *   Offset `0x0`: Coefficient A (RW)
+
+### Pipeline Flow Control (Valid-Ready Handshake)
+The `stream_processor` implements a robust **backpressure** mechanism using the standard Avalon-ST `valid` and `ready` signals.
+*   Uses a recursive enable logic: `enable[i] = (!valid[i]) || enable[i+1]`
+*   Ensures 100% throughput when the downstream is ready, and stall-free pausing when backpressure occurs.
 
 ## Performance Results
 
