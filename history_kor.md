@@ -211,6 +211,31 @@ Nios II 프로세서가 다재다능하긴 하지만, 대용량 버퍼 데이터
 ![Qsys 시스템 통합](./images/image_qsys.png)
 *(그림: Nios II, On-Chip Memory, SG-DMA, 커스텀 슬레이브 간의 연결을 보여주는 Qsys 시스템 뷰)*
 
+### 발전: 모듈러 SGDMA (Modular SGDMA)로의 진화
+
+단순한 메모리 복사를 넘어, 데이터가 이동하는 **도중에** 연산을 수행하려면(`(Data * A) / 400`), 기존의 Memory-to-Memory DMA 하나로는 부족합니다. 데이터 스트림 중간에 우리의 `stream_processor`를 끼워 넣어야 하기 때문입니다.
+
+이를 위해 **Modular SGDMA** 아키텍처를 도입했습니다. 이 방식은 DMA를 기능별로 분리(Disaggregate)하여 유연한 연결을 가능하게 합니다.
+
+#### 아키텍처 변경 사항
+*   **Existing (Standard SGDMA)**: `Read Master`와 `Write Master`가 내부에 묶여 있음. (단순 복사 용도)
+*   **New (Modular SGDMA)**: 3개의 독립된 컴포넌트로 분리.
+    1.  **mSGDMA Dispatcher**: Nios II의 명령(Descriptor)을 받아 Read/Write Master를 제어.
+    2.  **mSGDMA Read Master**: 메모리에서 데이터를 읽어 **Avalon-ST Source**로 내보냄.
+    3.  **mSGDMA Write Master**: **Avalon-ST Sink**로 데이터를 받아 메모리에 씀.
+
+#### Platform Designer 구현 가이드
+Platform Designer(Qsys)에서 다음과 같이 구성하여 스트리밍 파이프라인을 완성했습니다:
+
+1.  **컴포넌트 추가**:
+    *   `Modular SGDMA Dispatcher`: CSR 인터페이스를 Nios II 데이터 마스터에 연결.
+    *   `Modular SGDMA Read Master`: 메모리 맵 마스터는 소스 메모리에, 스트리밍 소스(`Data Source`)는 프로세서에 연결.
+    *   `Modular SGDMA Write Master`: 메모리 맵 마스터는 목적지 메모리에, 스트리밍 싱크(`Data Sink`)는 프로세서에 연결.
+2.  **Stream Processor 연결 (핵심)**:
+    *   `Read Master.Source` Connects to `Stream Processor.Sink`
+    *   `Stream Processor.Source` Connects to `Write Master.Sink`
+    *   이렇게 함으로써 메모리에서 읽혀진 데이터는 필연적으로 우리의 하드웨어 로직을 통과해야만 다시 메모리로 쓰여질 수 있습니다.
+
 ### 스트리밍 파이프라인 제어 (Valid-Ready Handshake)
 
 Avalon-Streaming 인터페이스를 사용한 **Stream Processor**(`stream_processor.v`) 설계의 핵심은 데이터 흐름 제어(Backpressure)입니다.
