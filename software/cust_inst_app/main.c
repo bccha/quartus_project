@@ -16,6 +16,10 @@
 // Assuming DMA device name is defined in system.h, commonly used here
 #define DMA_DEV_NAME DMA_ONCHIP_DP_CSR_NAME
 
+// New Modular SGDMA (Stream Acceleration) Dispatchers
+#define DISPATCHER_READ_NAME DISPATCHER_READ_CSR_NAME
+#define DISPATCHER_WRITE_NAME DISPATCHER_WRITE_CSR_NAME
+
 int src_data[DATA_SIZE];
 
 /**
@@ -217,6 +221,68 @@ void run_custom_instruction_test() {
   }
 }
 
+/**
+ * @brief [New] Perform Stream Acceleration (Mem -> Stream -> Mem)
+ */
+void run_stream_acceleration_test(int coeff_a) {
+  printf("\n--- [New] Starting Stream Acceleration (Modular SGDMA) ---\n");
+  printf("Setting Stream Processor Coeff A = %d\n", coeff_a);
+
+  // Set Stream Processor Coefficient (avs_write to index 0)
+  IOWR(STREAM_MULTDIV_0_BASE, 0, coeff_a);
+
+  init_source_data();
+  alt_dcache_flush(src_data, sizeof(src_data));
+
+  alt_msgdma_dev *dma_read = alt_msgdma_open(DISPATCHER_READ_NAME);
+  alt_msgdma_dev *dma_write = alt_msgdma_open(DISPATCHER_WRITE_NAME);
+
+  if (!dma_read || !dma_write) {
+    printf("Error: Could not open Modular SGDMA dispatchers.\n");
+    return;
+  }
+
+  alt_msgdma_standard_descriptor desc_read, desc_write;
+
+  // Construct Descriptors
+  alt_msgdma_construct_standard_mm_to_st_descriptor(
+      dma_read, &desc_read, (alt_u32 *)src_data, sizeof(src_data), 0);
+  alt_msgdma_construct_standard_st_to_mm_descriptor(
+      dma_write, &desc_write, (alt_u32 *)DEST_ADDR_BASE, sizeof(src_data), 0);
+
+  alt_u64 start = alt_timestamp();
+
+  // Launch WRITE first, then READ
+  alt_msgdma_standard_descriptor_async_transfer(dma_write, &desc_write);
+  alt_msgdma_standard_descriptor_async_transfer(dma_read, &desc_read);
+
+  // Wait for WRITE to finish
+  while (IORD_ALTERA_MSGDMA_CSR_STATUS(dma_write->csr_base) &
+         ALTERA_MSGDMA_CSR_BUSY_MASK)
+    ;
+
+  alt_u64 total_time = alt_timestamp() - start;
+  printf("Stream Processing Done. Cycles: %llu\n", total_time);
+
+  // Verify a few values (Logic: Result = (Input * A) / 400)
+  printf("Verifying Results (Logic: (In * %d) / 400):\n", coeff_a);
+  int success = 1;
+  for (int i = 0; i < 5; i++) {
+    int input = src_data[i];
+    int expected = (input * coeff_a) / 400;
+    int actual = IORD(DEST_ADDR_BASE, i);
+    printf("  Idx %d: In=%d, Expected=%d, Actual=%d\n", i, input, expected,
+           actual);
+    if (actual != expected)
+      success = 0;
+  }
+  if (success)
+    printf("Stream Acceleration Logic Check: PASS\n");
+  else
+    printf("Stream Acceleration Logic Check: FAIL (Small diffs ok due to "
+           "approximation)\n");
+}
+
 int main() {
   printf("Custom Instruction & DMA Test Application Start!\n");
 
@@ -247,6 +313,9 @@ int main() {
 
   // Optional: Run full DMA transfer validation
   start_dma_transfer();
+
+  // 4. [New] Stream Acceleration Test
+  run_stream_acceleration_test(800);
 
   return 0;
 }
