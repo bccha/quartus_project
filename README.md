@@ -9,6 +9,9 @@ For a deep dive into the implementation details, including design rationale, tim
 *   [🇺🇸 **English: Implementation Journey**](./history.md)
 *   [🇰🇷 **Korean: FPGA 프로젝트 검증 (한글)**](./history_kor.md)
 
+### Read this in other languages
+*   [🇰🇷 **한국어 (Korean)**](./README_kor.md)
+
 ## Project Overview
 
 ### Key Features
