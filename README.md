@@ -67,7 +67,7 @@ Disaggregated mSGDMA architecture with inline computation.
 
 ## 🏗️ System Architecture
 
-![System Architecture](./images/system_architecture_1770538427698.png)
+![System Architecture](./images/system_architecture_simd_1770584282890.png)
 
 **Component Overview:**
 

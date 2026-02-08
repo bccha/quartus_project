@@ -12,17 +12,26 @@ Transition from traditional testbenches to Python-based modern verification envi
         - [x] Execute `pytest test_runner.py` to run all module tests at once.
     - [x] **Waveform Viewing**:
         - [x] Enabled `waves=True` in `test_runner.py`.
-        - [ ] View generated `.vcd` or `.fst` files in `sim_build/` using **GTKWave**.
-        - [ ] Run `make pytest_clean` to remove simulation artifacts and XML logs.
-    - [ ] Create a Unit Test environment for `stream_processor.v` using Python Mock Drivers/Monitors.
-    - [ ] Implement randomized stress tests for Backpressure logic.
+        - [x] View generated `.vcd` or `.fst` files in `sim_build/` using **GTKWave**.
+        - [x] Run `make pytest_clean` to remove simulation artifacts and XML logs.
+    - [x] Create a Unit Test environment for `stream_processor.v` using Python Mock Drivers/Monitors.
+    - [ ] Implement randomized stress tests for Backpressure logic (Partially covered in `tb_stream_processor_avs.py`).
 - [ ] **AXI Interface Verification (cocotbext-axi)**
     - [ ] Study AMBA AXI4 Protocol (AXI-Stream, AXI-Lite).
     - [ ] Implement a simple AXI-Stream module.
     - [ ] Verify AXI-Stream logic using `cocotbext-axi`.
     - [ ] Explore AXI RAM models in Cocotb for Memory-Mapped logic verification.
 
-## 2. Image Processing Hardware
+## 2. Advanced Hardware Acceleration (SIMD)
+Build high-performance compute engines using parallel processing techniques.
+
+- [x] **Stream Processor Optimization**
+    - [x] Implement 3-Stage Pipeline with Backpressure.
+    - [x] Solve Endianness issues (Re-ordering 128-bit packed data).
+    - [x] **128-bit SIMD Implementation**: 4-Lane Parallel Processing.
+    - [x] Achieve >85x Speedup vs Software.
+
+## 3. Image Processing Hardware
 Apply pipeline and DMA knowledge to real-time pixel processing.
 
 - [ ] **Basic Pixel Filter Implementation**
@@ -33,19 +42,29 @@ Apply pipeline and DMA knowledge to real-time pixel processing.
     - [ ] Handle line buffers (FIFO) for 2D kernel operations.
     - [ ] Benchmark 86x speedup vs. SW OpenCV implementation.
 
-## 3. High-Speed Signal Processing (HDMI & LVDS)
+## 4. High-Speed Signal Processing (HDMI & LVDS)
 Understand the physical layer and timing requirements of video signals.
 
-- [ ] **HDMI (TMDS) Signal Handling**
-    - [ ] Study HDMI 1.4 protocol and TMDS encoding (8b/10b).
-    - [ ] Implement/Analyze a Video Pattern Generator (VPG).
-    - [ ] Understand H-Sync, V-Sync, and Data Enable (DE) timing.
-- [ ] **LVDS (Low-Voltage Differential Signaling)**
-    - [ ] Learn Differential Signaling principles.
-    - [ ] Implement Serialization/Deserialization (SerDes) for LVDS.
-    - [ ] Handle Clock Domain Crossing (CDC) between pixel clock and serial clock.
+- [ ] **HDMI Output (DE10-Nano Specific)**
+    - [ ] **I2C Controller for ADV7513**
+        - [ ] Study ADV7513 Programming Guide (Register Map).
+        - [ ] Implement I2C Master (or use OpenCore/Intel IP) to configure the HDMI transmitter chip.
+        - [ ] Verify I2C communication (ACK/NACK).
+    - [ ] **Video Sync Generator (VGA Timing)**
+        - [ ] Generate H-Sync, V-Sync, and Data Enable (DE) signals for 640x480 resolution (25.175MHz Pixel Clock).
+        - [ ] Verify timing using simulation (GTKWave).
+    - [ ] **Video Pattern Generator (VPG)**
+        - [ ] Design a simple Color Bar pattern generator based on X/Y coordinates.
+    - [ ] **Top-Level Integration**
+        - [ ] Connect PLL (Clock Wizard) for requested Pixel Clock.
+        - [ ] Map I/O pins (HDMI_TX_D, HDMI_TX_CLK, etc.) in Quartus Pin Planner.
+- [ ] **Advanced: HDMI Input & Image Pipeline**
+    - [ ] Understand HDMI RX constraints.
+    - [ ] Implement Frame Buffer using DDR3 Memory (requires Video DMA).
 
-## 4. Architectural Deep Dive
+## 4. High-Speed Signal Processing (LVDS & SerDes)
+
+## 5. Architectural Deep Dive
 - [ ] **RISC-V Core Implementation**: Design a basic 3-stage RISC-V CPU to understand instruction pipelines.
 - [ ] **System-on-Chip (SoC) Integration**: Build a custom SoC by hand-typing AXI interconnects instead of using Qsys/Vivado IP Integrator.
 
