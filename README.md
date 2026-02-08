@@ -285,3 +285,4 @@ MIT License - See [LICENSE](./LICENSE) for details
 - Intel FPGA University Program
 - Cocotb open-source verification framework
 - VS Code Surfer waveform viewer
+
