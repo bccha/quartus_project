@@ -32,6 +32,4 @@ def test_cocotb_modules(toplevel, module, sources):
         toplevel=toplevel,
         module=module,
         simulator="icarus",
-        sim_args=["-s", "cocotb_dump"], # cocotb_dump를 추가 top-level로 포함
-        # waves=True, # Manual dumping 사용을 위해 비활성화
     )
