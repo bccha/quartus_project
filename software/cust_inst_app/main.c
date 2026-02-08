@@ -358,8 +358,8 @@ int main() {
 #ifdef STREAM_MULTDIV_BASE
   int hw_version = IORD(STREAM_MULTDIV_BASE, 0);
   printf("Hardware Version: 0x%X (%d)\n", hw_version, hw_version);
-  printf("Expected: 0x103 (259) for latest version\n");
-  if (hw_version == 0x103) {
+  printf("Expected: 0x110 for latest version\n");
+  if (hw_version == 0x110) {
     printf(">>> Hardware is UP-TO-DATE! <<<\n");
   } else {
     printf(">>> WARNING: Hardware may be OLD version! <<<\n");
