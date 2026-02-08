@@ -17,101 +17,45 @@ For a deep dive into the implementation details, including design rationale, tim
 ### Key Features
 1.  **Custom Instruction Unit**:
     *   Optimized hardware logic for specific arithmetic (`(A * B) / 400`).
-    *   **Timing Optimization**: Replaces slow hardware division with shift-add operations (`(A * 1311) >> 19`) to resolve Setup Time Violations.
+    *   **Timing Optimization**: Replaces slow hardware division with shift-add operations (`(A * 5243) >> 21`) to resolve Setup Time Violations.
     *   Achieves significant cycle reduction compared to software implementation.
 
-2.  **Custom Avalon-MM Slave**:
-    *   Integrates Dual-Port RAM (DPRAM) for internal storage.
-    *   Supports high-speed data access from both Nios II and DMA.
+2.  **Streaming Acceleration (Stream Processor)**:
+    *   **N-Stage Pipeline**: Refactored to a parameterizable 3-stage architecture for high-frequency stability.
+    *   **Backpressure support**: Implemented robust Avalon-ST Valid-Ready handshake (`pipe_valid`/`pipe_ready` chain).
+    *   **Endianness Correction**: Automatic byte-swapping to match Nios II memory layout.
+    *   **Reusable Template**: Includes [pipe_template.v](./RTL/pipe_template.v) for future projects.
 
-3.  **DMA Controller (SG-DMA)**:
-    *   Handles high-throughput data transfer between On-Chip Memory and Custom Slave.
-    *   Eliminates CPU overhead for memory copy operations.
+3.  **Modular SGDMA Integration**:
+    *   Offloads CPU by performing calculations inline during DMA transfers.
+    *   Uses disaggregated mSGDMA Dispatcher, Read Master, and Write Master.
 
 ## Directory Structure
 
 ```text
-d:/quartus_project/
+c:/Workspace/quartus_project/
 ├── RTL/                    # Verilog HDL Source Files
-│   ├── my_multi_calc.v     # Custom Instruction Logic (Shift-Add)
-│   ├── my_slave.v          # Custom Avalon-MM Slave with DPRAM
+│   ├── stream_processor.v  # 3-Stage Pipeline Accelerator
+│   ├── pipe_template.v     # Reusable N-Stage Template
+│   ├── my_multi_calc.v     # Custom Instruction Logic
 │   └── top_module.v        # Top-level integration
 ├── software/
 │   ├── cust_inst_app/      # Nios II Application Code
-│   │   └── main.c          # Performance Benchmarking & Test App
-│   └── cust_inst/          # Board Support Package (BSP) - *Excluded from git*
-├── images/                 # Documentation Inteface Images
+│   │   └── main.c          # Benchmarking & Test App (HW v0x110)
+│   └── cust_inst/          # BSP - *Excluded from git*
 ├── history_kor.md          # Implementation Journey (Korean)
-└── custom_inst_qsys.qsys   # Platform Designer (Qsys) System File
+├── history.md              # Implementation Journey (English)
+└── custom_inst_qsys.qsys   # Platform Designer System File
 ```
-
-## System Architecture
-
-The Nios II processor acts as the main controller, orchestrating the following:
-*   **Custom Instruction**: Directly connected to the Nios II data path for zero-latency execution (or multi-cycle).
-*   **DMA Engine**: Configured via the `main.c` application to move data chunks (e.g., 1KB blocks) from main memory to the custom hardware accelerator's buffer.
-
-## Software Implementation
-
-The software (`main.c`) performs two primary benchmarks:
-
-1.  **Data Copy Speed**:
-    *   Comparing `CPU memcpy` loop vs `SG-DMA Async Transfer`.
-    *   Includes cache flushing overhead and busy-wait polling time for accurate hardware measurement.
-
-2.  **Calculation Speed**:
-    *   Comparing `C Software Division` vs `Hardware Custom Instruction`.
-    *   Uses high-resolution hardware timers (`alt_timestamp`) for cycle-accurate measurement.
-
-## Streaming Acceleration Integration (New)
-
-To use the `stream_processor` for inline data processing (`(Data * A) / 400`), the Qsys system must be reconfigured using **Modular SGDMA**.
-
-### Platform Designer (Qsys) Setup
-1.  **Add Component**: Import `RTL/stream_processor.v` as a new component.
-    *   Interfaces: `asi` (Sink), `aso` (Source), `avs` (Control Slave).
-2.  **Modular SGDMA Architecture**:
-    *   Replace standard SGDMA with 3 separate modules:
-        *   **mSGDMA Dispatcher**: Connects to Nios II.
-        *   **mSGDMA Read Master**: Reads from Memory -> Sends to Stream.
-        *   **mSGDMA Write Master**: Receives from Stream -> Writes to Memory.
-3.  **Connections**:
-    *   `Read Master (Source)` -> `Stream Processor (Sink)`
-    *   `Stream Processor (Source)` -> `Write Master (Sink)`
-    *   `Nios II (Data Master)` -> `Stream Processor (avs)` (To set Coefficient A).
-
-### Address Map
-*   **Stream Processor CSR**: Base Address (e.g., `0x0008_1000`)
-    *   Offset `0x0`: Coefficient A (RW)
-
-### Pipeline Flow Control (Valid-Ready Handshake)
-The `stream_processor` implements a robust **backpressure** mechanism using the standard Avalon-ST `valid` and `ready` signals.
-*   Uses a recursive enable logic: `enable[i] = (!valid[i]) || enable[i+1]`
-*   Ensures 100% throughput when the downstream is ready, and stall-free pausing when backpressure occurs.
 
 ## Performance Results
 
-Our benchmarking results demonstrate substantial improvements:
+Our final benchmarks on Nios II (50MHz) demonstrate massive acceleration:
 
-![Performance Result](./images/image_nios_result.png)
+- **Bypass Mode**: 7.59x faster than CPU memory copy.
+- **Arithmetic Acceleration**: **86.14x faster** than pure software division.
 
-*   **Calculation**: Hardware Custom Instruction is approx **5-10x faster** (depending on optimization level) than software emulated division.
-*   **Data Transfer**: DMA offloads the CPU, allowing for theoretical parallel processing, though setup overhead is visible for small datasets (1KB).
-
-## How to Build & Run
-
-1.  **Hardware Generation**:
-    *   Open `custom_inst.qpf` in Quartus Prime.
-    *   Open Platform Designer (`.qsys`) and Generate HDL.
-    *   Compile the Quartus project to generate the `.sof` file.
-    *   Program the FPGA.
-
-2.  **Software Compilation (Nios II SBT)**:
-    *   Generate the BSP: `nios2-bsp-generate-files --settings=software/cust_inst/settings.bsp --bsp-dir=software/cust_inst`
-    *   Build the application: `make -C software/cust_inst_app`
-    *   Run on hardware: `nios2-download -g software/cust_inst_app/main.elf && nios2-terminal`
-
-*Note: The `software/cust_inst` BSP folder is ignored in git. You must regenerate it using the `.sopcinfo` file.*
+---
 
 ## License
 MIT License

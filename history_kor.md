@@ -1,7 +1,7 @@
 # FPGA 프로젝트 검증: 커스텀 슬레이브부터 하드웨어 가속기까지
 
 **날짜:** 2026-02-06
-**프로젝트 경로:** `d:/quartus_project`
+**프로젝트 경로:** `c:/Workspace/quartus_project`
 
 ---
 
