@@ -16,6 +16,11 @@
          value = "0";
          type = "int";
       }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
+      }
    }
    element cust_cal_0
    {
@@ -23,6 +28,35 @@
       {
          value = "7";
          type = "int";
+      }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
+      }
+   }
+   element custom_inst_qsys
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element custom_inst_qsys
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
+      }
+   }
+   element custom_inst_qsys
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Cyclone V";
+         type = "String";
       }
    }
    element custom_inst_qsys
@@ -61,7 +95,7 @@
    {
       datum baseAddress
       {
-         value = "1088";
+         value = "4224";
          type = "String";
       }
    }
@@ -69,7 +103,7 @@
    {
       datum baseAddress
       {
-         value = "1120";
+         value = "4288";
          type = "String";
       }
    }
@@ -80,12 +114,17 @@
          value = "3";
          type = "int";
       }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
+      }
    }
    element jtag_uart_0.avalon_jtag_slave
    {
       datum baseAddress
       {
-         value = "1144";
+         value = "4328";
          type = "String";
       }
    }
@@ -99,9 +138,62 @@
    }
    element mmio_0.s0
    {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
       datum baseAddress
       {
          value = "786432";
+         type = "String";
+      }
+   }
+   element msgdma_read
+   {
+      datum _sortIndex
+      {
+         value = "11";
+         type = "int";
+      }
+   }
+   element msgdma_read.csr
+   {
+      datum baseAddress
+      {
+         value = "4192";
+         type = "String";
+      }
+   }
+   element msgdma_read.descriptor_slave
+   {
+      datum baseAddress
+      {
+         value = "4272";
+         type = "String";
+      }
+   }
+   element msgdma_write
+   {
+      datum _sortIndex
+      {
+         value = "12";
+         type = "int";
+      }
+   }
+   element msgdma_write.csr
+   {
+      datum baseAddress
+      {
+         value = "4160";
+         type = "String";
+      }
+   }
+   element msgdma_write.descriptor_slave
+   {
+      datum baseAddress
+      {
+         value = "4256";
          type = "String";
       }
    }
@@ -117,7 +209,7 @@
    {
       datum baseAddress
       {
-         value = "4096";
+         value = "2048";
          type = "String";
       }
    }
@@ -127,6 +219,11 @@
       {
          value = "5";
          type = "int";
+      }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
       }
    }
    element onchip_memory2_0
@@ -139,9 +236,30 @@
    }
    element onchip_memory2_0.s1
    {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
       datum baseAddress
       {
          value = "524288";
+         type = "String";
+      }
+   }
+   element stream_multdiv
+   {
+      datum _sortIndex
+      {
+         value = "10";
+         type = "int";
+      }
+   }
+   element stream_multdiv.avalon_slave_0_1
+   {
+      datum baseAddress
+      {
+         value = "4304";
          type = "String";
       }
    }
@@ -152,12 +270,17 @@
          value = "4";
          type = "int";
       }
+      datum sopceditor_expanded
+      {
+         value = "1";
+         type = "boolean";
+      }
    }
    element sysid_qsys_0.control_slave
    {
       datum baseAddress
       {
-         value = "1136";
+         value = "4320";
          type = "String";
       }
    }
@@ -168,12 +291,17 @@
          value = "6";
          type = "int";
       }
+      datum sopceditor_expanded
+      {
+         value = "0";
+         type = "boolean";
+      }
    }
    element timer_0.s1
    {
       datum baseAddress
       {
-         value = "1024";
+         value = "4096";
          type = "String";
       }
    }
@@ -288,6 +416,92 @@
   <parameter name="USE_AUTO_ADDRESS_WIDTH" value="0" />
   <parameter name="USE_RESPONSE" value="0" />
  </module>
+ <module name="msgdma_read" kind="altera_msgdma" version="20.1" enabled="1">
+  <parameter name="AUTO_DESCRIPTOR_READ_MASTER_ADDRESS_MAP" value="" />
+  <parameter
+     name="AUTO_DESCRIPTOR_READ_MASTER_ADDRESS_WIDTH"
+     value="AddressWidth = -1" />
+  <parameter name="AUTO_DESCRIPTOR_WRITE_MASTER_ADDRESS_MAP" value="" />
+  <parameter
+     name="AUTO_DESCRIPTOR_WRITE_MASTER_ADDRESS_WIDTH"
+     value="AddressWidth = -1" />
+  <parameter name="AUTO_DEVICE" value="5CSEBA6U23I7" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="7" />
+  <parameter name="AUTO_MM_READ_ADDRESS_MAP"><![CDATA[<address-map><slave name='onchip_memory2_0.s1' start='0x80000' end='0xC0000' /></address-map>]]></parameter>
+  <parameter name="AUTO_MM_READ_ADDRESS_WIDTH" value="AddressWidth = 20" />
+  <parameter name="AUTO_MM_WRITE_ADDRESS_MAP" value="" />
+  <parameter name="AUTO_MM_WRITE_ADDRESS_WIDTH" value="AddressWidth = -1" />
+  <parameter name="BURST_ENABLE" value="0" />
+  <parameter name="BURST_WRAPPING_SUPPORT" value="0" />
+  <parameter name="CHANNEL_ENABLE" value="0" />
+  <parameter name="CHANNEL_WIDTH" value="8" />
+  <parameter name="DATA_FIFO_DEPTH" value="64" />
+  <parameter name="DATA_WIDTH" value="32" />
+  <parameter name="DESCRIPTOR_FIFO_DEPTH" value="128" />
+  <parameter name="ENHANCED_FEATURES" value="0" />
+  <parameter name="ERROR_ENABLE" value="0" />
+  <parameter name="ERROR_WIDTH" value="8" />
+  <parameter name="EXPOSE_ST_PORT" value="0" />
+  <parameter name="FIX_ADDRESS_WIDTH" value="32" />
+  <parameter name="MAX_BURST_COUNT" value="2" />
+  <parameter name="MAX_BYTE" value="4096" />
+  <parameter name="MAX_STRIDE" value="1" />
+  <parameter name="MODE" value="1" />
+  <parameter name="PACKET_ENABLE" value="0" />
+  <parameter name="PREFETCHER_DATA_WIDTH" value="32" />
+  <parameter name="PREFETCHER_ENABLE" value="0" />
+  <parameter name="PREFETCHER_MAX_READ_BURST_COUNT" value="2" />
+  <parameter name="PREFETCHER_READ_BURST_ENABLE" value="0" />
+  <parameter name="PROGRAMMABLE_BURST_ENABLE" value="0" />
+  <parameter name="RESPONSE_PORT" value="2" />
+  <parameter name="STRIDE_ENABLE" value="0" />
+  <parameter name="TRANSFER_TYPE" value="Aligned Accesses" />
+  <parameter name="USE_FIX_ADDRESS_WIDTH" value="0" />
+ </module>
+ <module name="msgdma_write" kind="altera_msgdma" version="20.1" enabled="1">
+  <parameter name="AUTO_DESCRIPTOR_READ_MASTER_ADDRESS_MAP" value="" />
+  <parameter
+     name="AUTO_DESCRIPTOR_READ_MASTER_ADDRESS_WIDTH"
+     value="AddressWidth = -1" />
+  <parameter name="AUTO_DESCRIPTOR_WRITE_MASTER_ADDRESS_MAP" value="" />
+  <parameter
+     name="AUTO_DESCRIPTOR_WRITE_MASTER_ADDRESS_WIDTH"
+     value="AddressWidth = -1" />
+  <parameter name="AUTO_DEVICE" value="5CSEBA6U23I7" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="7" />
+  <parameter name="AUTO_MM_READ_ADDRESS_MAP" value="" />
+  <parameter name="AUTO_MM_READ_ADDRESS_WIDTH" value="AddressWidth = -1" />
+  <parameter name="AUTO_MM_WRITE_ADDRESS_MAP"><![CDATA[<address-map><slave name='mmio_0.s0' start='0xC0000' end='0xC0400' /></address-map>]]></parameter>
+  <parameter name="AUTO_MM_WRITE_ADDRESS_WIDTH" value="AddressWidth = 20" />
+  <parameter name="BURST_ENABLE" value="0" />
+  <parameter name="BURST_WRAPPING_SUPPORT" value="0" />
+  <parameter name="CHANNEL_ENABLE" value="0" />
+  <parameter name="CHANNEL_WIDTH" value="8" />
+  <parameter name="DATA_FIFO_DEPTH" value="64" />
+  <parameter name="DATA_WIDTH" value="32" />
+  <parameter name="DESCRIPTOR_FIFO_DEPTH" value="128" />
+  <parameter name="ENHANCED_FEATURES" value="0" />
+  <parameter name="ERROR_ENABLE" value="0" />
+  <parameter name="ERROR_WIDTH" value="8" />
+  <parameter name="EXPOSE_ST_PORT" value="0" />
+  <parameter name="FIX_ADDRESS_WIDTH" value="32" />
+  <parameter name="MAX_BURST_COUNT" value="2" />
+  <parameter name="MAX_BYTE" value="4096" />
+  <parameter name="MAX_STRIDE" value="1" />
+  <parameter name="MODE" value="2" />
+  <parameter name="PACKET_ENABLE" value="0" />
+  <parameter name="PREFETCHER_DATA_WIDTH" value="32" />
+  <parameter name="PREFETCHER_ENABLE" value="0" />
+  <parameter name="PREFETCHER_MAX_READ_BURST_COUNT" value="2" />
+  <parameter name="PREFETCHER_READ_BURST_ENABLE" value="0" />
+  <parameter name="PROGRAMMABLE_BURST_ENABLE" value="0" />
+  <parameter name="RESPONSE_PORT" value="2" />
+  <parameter name="STRIDE_ENABLE" value="0" />
+  <parameter name="TRANSFER_TYPE" value="Aligned Accesses" />
+  <parameter name="USE_FIX_ADDRESS_WIDTH" value="0" />
+ </module>
  <module
    name="nios2_gen2_0"
    kind="altera_nios2_gen2"
@@ -312,7 +526,7 @@
   <parameter name="dataAddrWidth" value="20" />
   <parameter name="dataMasterHighPerformanceAddrWidth" value="1" />
   <parameter name="dataMasterHighPerformanceMapParam" value="" />
-  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='timer_0.s1' start='0x400' end='0x440' type='altera_avalon_timer.s1' /><slave name='dma_onchip_dp.csr' start='0x440' end='0x460' type='altera_msgdma.csr' /><slave name='dma_onchip_dp.descriptor_slave' start='0x460' end='0x470' type='altera_msgdma.descriptor_slave' /><slave name='sysid_qsys_0.control_slave' start='0x470' end='0x478' type='altera_avalon_sysid_qsys.control_slave' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x478' end='0x480' type='altera_avalon_jtag_uart.avalon_jtag_slave' /><slave name='nios2_gen2_0.debug_mem_slave' start='0x1000' end='0x1800' type='altera_nios2_gen2.debug_mem_slave' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0xC0000' type='altera_avalon_onchip_memory2.s1' /><slave name='mmio_0.s0' start='0xC0000' end='0xC0400' type='altera_avalon_mm_bridge.s0' /></address-map>]]></parameter>
+  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='nios2_gen2_0.debug_mem_slave' start='0x800' end='0x1000' type='altera_nios2_gen2.debug_mem_slave' /><slave name='timer_0.s1' start='0x1000' end='0x1040' type='altera_avalon_timer.s1' /><slave name='msgdma_write.csr' start='0x1040' end='0x1060' type='altera_msgdma.csr' /><slave name='msgdma_read.csr' start='0x1060' end='0x1080' type='altera_msgdma.csr' /><slave name='dma_onchip_dp.csr' start='0x1080' end='0x10A0' type='altera_msgdma.csr' /><slave name='msgdma_write.descriptor_slave' start='0x10A0' end='0x10B0' type='altera_msgdma.descriptor_slave' /><slave name='msgdma_read.descriptor_slave' start='0x10B0' end='0x10C0' type='altera_msgdma.descriptor_slave' /><slave name='dma_onchip_dp.descriptor_slave' start='0x10C0' end='0x10D0' type='altera_msgdma.descriptor_slave' /><slave name='stream_multdiv.avalon_slave_0_1' start='0x10D0' end='0x10E0' type='stream_multdiv.avalon_slave_0_1' /><slave name='sysid_qsys_0.control_slave' start='0x10E0' end='0x10E8' type='altera_avalon_sysid_qsys.control_slave' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x10E8' end='0x10F0' type='altera_avalon_jtag_uart.avalon_jtag_slave' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0xC0000' type='altera_avalon_onchip_memory2.s1' /><slave name='mmio_0.s0' start='0xC0000' end='0xC0400' type='altera_avalon_mm_bridge.s0' /></address-map>]]></parameter>
   <parameter name="data_master_high_performance_paddr_base" value="0" />
   <parameter name="data_master_high_performance_paddr_size" value="0" />
   <parameter name="data_master_paddr_base" value="0" />
@@ -351,14 +565,14 @@
   <parameter name="icache_tagramBlockType" value="Automatic" />
   <parameter name="impl" value="Tiny" />
   <parameter name="instAddrWidth" value="20" />
-  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='nios2_gen2_0.debug_mem_slave' start='0x1000' end='0x1800' type='altera_nios2_gen2.debug_mem_slave' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0xC0000' type='altera_avalon_onchip_memory2.s1' /></address-map>]]></parameter>
+  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='nios2_gen2_0.debug_mem_slave' start='0x800' end='0x1000' type='altera_nios2_gen2.debug_mem_slave' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0xC0000' type='altera_avalon_onchip_memory2.s1' /></address-map>]]></parameter>
   <parameter name="instructionMasterHighPerformanceAddrWidth" value="1" />
   <parameter name="instructionMasterHighPerformanceMapParam" value="" />
   <parameter name="instruction_master_high_performance_paddr_base" value="0" />
   <parameter name="instruction_master_high_performance_paddr_size" value="0" />
   <parameter name="instruction_master_paddr_base" value="0" />
   <parameter name="instruction_master_paddr_size" value="0" />
-  <parameter name="internalIrqMaskSystemInfo" value="7" />
+  <parameter name="internalIrqMaskSystemInfo" value="31" />
   <parameter name="io_regionbase" value="0" />
   <parameter name="io_regionsize" value="0" />
   <parameter name="master_addr_map" value="false" />
@@ -515,6 +729,7 @@
   <parameter name="useShallowMemBlocks" value="false" />
   <parameter name="writable" value="true" />
  </module>
+ <module name="stream_multdiv" kind="stream_multdiv" version="1.0" enabled="1" />
  <module
    name="sysid_qsys_0"
    kind="altera_avalon_sysid_qsys"
@@ -540,7 +755,16 @@
    start="nios2_gen2_0.data_master"
    end="jtag_uart_0.avalon_jtag_slave">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0478" />
+  <parameter name="baseAddress" value="0x10e8" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="20.1"
+   start="nios2_gen2_0.data_master"
+   end="stream_multdiv.avalon_slave_0_1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10d0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -549,7 +773,7 @@
    start="nios2_gen2_0.data_master"
    end="sysid_qsys_0.control_slave">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0470" />
+  <parameter name="baseAddress" value="0x10e0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -558,7 +782,25 @@
    start="nios2_gen2_0.data_master"
    end="dma_onchip_dp.csr">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0440" />
+  <parameter name="baseAddress" value="0x1080" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="20.1"
+   start="nios2_gen2_0.data_master"
+   end="msgdma_read.csr">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x1060" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="20.1"
+   start="nios2_gen2_0.data_master"
+   end="msgdma_write.csr">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x1040" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -567,7 +809,7 @@
    start="nios2_gen2_0.data_master"
    end="nios2_gen2_0.debug_mem_slave">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x1000" />
+  <parameter name="baseAddress" value="0x0800" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -576,7 +818,25 @@
    start="nios2_gen2_0.data_master"
    end="dma_onchip_dp.descriptor_slave">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0460" />
+  <parameter name="baseAddress" value="0x10c0" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="20.1"
+   start="nios2_gen2_0.data_master"
+   end="msgdma_read.descriptor_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10b0" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="20.1"
+   start="nios2_gen2_0.data_master"
+   end="msgdma_write.descriptor_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10a0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -603,7 +863,7 @@
    start="nios2_gen2_0.data_master"
    end="timer_0.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0400" />
+  <parameter name="baseAddress" value="0x1000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -612,7 +872,7 @@
    start="nios2_gen2_0.instruction_master"
    end="nios2_gen2_0.debug_mem_slave">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x1000" />
+  <parameter name="baseAddress" value="0x0800" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -636,12 +896,40 @@
  <connection
    kind="avalon"
    version="20.1"
+   start="msgdma_read.mm_read"
+   end="onchip_memory2_0.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00080000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="20.1"
    start="dma_onchip_dp.mm_write"
    end="mmio_0.s0">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x000c0000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
+ <connection
+   kind="avalon"
+   version="20.1"
+   start="msgdma_write.mm_write"
+   end="mmio_0.s0">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x000c0000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon_streaming"
+   version="20.1"
+   start="stream_multdiv.avalon_streaming_source_0"
+   end="msgdma_write.st_sink" />
+ <connection
+   kind="avalon_streaming"
+   version="20.1"
+   start="msgdma_read.st_source"
+   end="stream_multdiv.avalon_streaming_sink_0_1" />
  <connection kind="clock" version="20.1" start="clk_0.clk" end="nios2_gen2_0.clk" />
  <connection kind="clock" version="20.1" start="clk_0.clk" end="jtag_uart_0.clk" />
  <connection kind="clock" version="20.1" start="clk_0.clk" end="sysid_qsys_0.clk" />
@@ -658,6 +946,17 @@
    start="clk_0.clk"
    end="dma_onchip_dp.clock" />
  <connection
+   kind="clock"
+   version="20.1"
+   start="clk_0.clk"
+   end="stream_multdiv.clock" />
+ <connection kind="clock" version="20.1" start="clk_0.clk" end="msgdma_read.clock" />
+ <connection
+   kind="clock"
+   version="20.1"
+   start="clk_0.clk"
+   end="msgdma_write.clock" />
+ <connection
    kind="interrupt"
    version="20.1"
    start="nios2_gen2_0.irq"
@@ -668,15 +967,29 @@
    kind="interrupt"
    version="20.1"
    start="nios2_gen2_0.irq"
-   end="jtag_uart_0.irq">
+   end="msgdma_write.csr_irq">
   <parameter name="irqNumber" value="1" />
  </connection>
  <connection
    kind="interrupt"
    version="20.1"
    start="nios2_gen2_0.irq"
-   end="timer_0.irq">
+   end="msgdma_read.csr_irq">
   <parameter name="irqNumber" value="2" />
+ </connection>
+ <connection
+   kind="interrupt"
+   version="20.1"
+   start="nios2_gen2_0.irq"
+   end="jtag_uart_0.irq">
+  <parameter name="irqNumber" value="3" />
+ </connection>
+ <connection
+   kind="interrupt"
+   version="20.1"
+   start="nios2_gen2_0.irq"
+   end="timer_0.irq">
+  <parameter name="irqNumber" value="4" />
  </connection>
  <connection
    kind="nios_custom_instruction"
@@ -734,12 +1047,27 @@
    kind="reset"
    version="20.1"
    start="clk_0.clk_reset"
+   end="stream_multdiv.reset" />
+ <connection
+   kind="reset"
+   version="20.1"
+   start="clk_0.clk_reset"
    end="onchip_memory2_0.reset1" />
  <connection
    kind="reset"
    version="20.1"
    start="clk_0.clk_reset"
    end="dma_onchip_dp.reset_n" />
+ <connection
+   kind="reset"
+   version="20.1"
+   start="clk_0.clk_reset"
+   end="msgdma_read.reset_n" />
+ <connection
+   kind="reset"
+   version="20.1"
+   start="clk_0.clk_reset"
+   end="msgdma_write.reset_n" />
  <connection
    kind="reset"
    version="20.1"
@@ -769,12 +1097,27 @@
    kind="reset"
    version="20.1"
    start="nios2_gen2_0.debug_reset_request"
+   end="stream_multdiv.reset" />
+ <connection
+   kind="reset"
+   version="20.1"
+   start="nios2_gen2_0.debug_reset_request"
    end="onchip_memory2_0.reset1" />
  <connection
    kind="reset"
    version="20.1"
    start="nios2_gen2_0.debug_reset_request"
    end="dma_onchip_dp.reset_n" />
+ <connection
+   kind="reset"
+   version="20.1"
+   start="nios2_gen2_0.debug_reset_request"
+   end="msgdma_read.reset_n" />
+ <connection
+   kind="reset"
+   version="20.1"
+   start="nios2_gen2_0.debug_reset_request"
+   end="msgdma_write.reset_n" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
  <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />

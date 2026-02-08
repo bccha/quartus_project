@@ -1,12 +1,14 @@
 module stream_processor (
     input  wire        clk,
-    input  wire        reset,
+    input  wire        reset_n,
 
     // Avalon-MM Slave (Control Interface)
-    // Address 0: Coefficient A (Default 1)
     input  wire        avs_write,
     input  wire [31:0] avs_writedata,
-    input  wire [0:0]  avs_address, // Single register (1-bit address space effectively, but usually word aligned)
+    input  wire        avs_read,
+    output wire [31:0] avs_readdata,
+    output reg         avs_readdatavalid,
+    input  wire [1:0]  avs_address,  // Expanded to 2 bits for 4 registers
 
     // Avalon-ST Sink (Input from DMA Read)
     input  wire        asi_valid,
@@ -22,132 +24,126 @@ module stream_processor (
     // --------------------------------------------------------
     // CSR (Control Status Register) Logic
     // --------------------------------------------------------
+    
+    // Hardware Version (increment this when you update RTL)
+    localparam VERSION = 32'h0000_0103; // v1.03: 1-stage pipeline + bypass
+    
     reg [31:0] coeff_a;
-
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            coeff_a <= 32'd1; // Default multiplier = 1
-        end else if (avs_write) begin
-            // Address 0 check is implied if address width is 1 or just ignored if single register
-            coeff_a <= avs_writedata;
-        end
-    end
-
-    // --------------------------------------------------------
-    // Generalized Pipeline Logic
-    // --------------------------------------------------------
-    // Define Stages:
-    // Stage 0: Input Capture & Multiply (Input * A)
-    // Stage 1: Division (Shift-Add)
-    localparam NUM_STAGES = 2;
-
-    reg  [63:0] stage_data  [0:NUM_STAGES-1]; // Data for each stage
-    reg         stage_valid [0:NUM_STAGES-1]; // Valid for each stage
-    wire        stage_enable[0:NUM_STAGES-1]; // Enable for each stage
-
-    // Recursive Enable Logic (Backpressure)
-    // enable[i] = (!valid[i]) || enable[i+1]
-    // The last stage's "next enable" is the output ready signal (aso_ready)
+    reg        bypass;
+    reg [31:0] in_count;
+    reg [31:0] out_count;
+    reg [31:0] avs_readdata_reg;
     
-    genvar i;
-    generate
-        for (i = 0; i < NUM_STAGES; i = i + 1) begin : pipe_ctrl
-            if (i == NUM_STAGES - 1) begin
-                // Last Stage: Next enable is Output Ready
-                assign stage_enable[i] = (!stage_valid[i]) || aso_ready;
-            end else begin
-                // Typical Stage: Next enable is the next stage's enable signal
-                // Note: enable[i+1] effectively means "next stage is ready to accept"
-                // Actually, the formula is: enable[i] = (!valid[i]) || ( (!valid[i+1]) || enable[i+1_next] )
-                // Which simplifies to: enable[i] = (!valid[i]) || stage_enable[i+1];
-                assign stage_enable[i] = (!stage_valid[i]) || stage_enable[i+1];
-            end
-        end
-    endgenerate
+    // DEBUG: Signal activity counters
+    reg [31:0] asi_valid_count;  // How many times asi_valid was high
+    reg [31:0] aso_ready_count;  // How many times aso_ready was high
 
-    // Datapath & Valid Logic
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            stage_valid[0] <= 1'b0;
-            stage_valid[1] <= 1'b0;
-            stage_data[0]  <= 64'd0;
-            stage_data[1]  <= 64'd0;
+    assign avs_readdata = avs_readdata_reg;
+
+    always @(posedge clk or negedge reset_n) begin
+        if (!reset_n) begin
+            coeff_a   <= VERSION; // Initialize to version number for easy verification
+            bypass    <= 1'b0;
+            //in_count  <= 32'd0;
+            //out_count <= 32'd0;
+            avs_readdata_reg     <= 32'd0;
+            avs_readdatavalid    <= 1'b0;
+            asi_valid_count      <= 32'd0;
+            aso_ready_count      <= 32'd0;
         end else begin
-            // Stage 0: Input -> Multiply
-            if (stage_enable[0]) begin
-                stage_valid[0] <= asi_valid;
-                if (asi_valid) begin
-                    stage_data[0] <= (asi_data * coeff_a); // 32x32=64 mult
-                end
+            // Write Logic
+            if (avs_write) begin
+                case (avs_address)
+                    2'b00: coeff_a <= avs_writedata;
+                    2'b01: bypass  <= avs_writedata[0];
+                    // Address 2,3 are read-only (debug counters)
+                endcase
             end
+            
+            // Read Logic (Align with my_slave.v pattern: 1-cycle latency)
+            avs_readdatavalid <= avs_read;
+            if (avs_read) begin
+                case (avs_address)
+                    2'b00: avs_readdata_reg <= coeff_a;
+                    2'b01: avs_readdata_reg <= {31'd0, bypass};
+                    2'b10: avs_readdata_reg <= asi_valid_count;  // DEBUG
+                    // Address 2 is asi_valid_count
+                    2'b11: avs_readdata_reg <= last_asi_data;    // DEBUG: Read last input
+                endcase
+            end
+            
+            // DEBUG: Count signal activity
+            if (asi_valid) asi_valid_count <= asi_valid_count + 1;
+            if (aso_ready) aso_ready_count <= aso_ready_count + 1;
 
-            // Stage 1: Multiply -> Divide
-            if (stage_enable[1]) begin
-                stage_valid[1] <= stage_valid[0];
-                if (stage_valid[0]) begin
-                     // shift-add from stage 0 result
-                     stage_data[1] <= ((stage_data[0] << 10) + (stage_data[0] << 8) + (stage_data[0] << 5) - stage_data[0]) >> 19;
-                end
-            end
+            // Debug Counters
+            // These counters are now handled within the pipeline stages for more accurate tracking.
+            // if (asi_valid && asi_ready) in_count  <= in_count + 1;
+            // if (aso_valid && aso_ready) out_count <= out_count + 1;
         end
     end
 
-    // Interface Assignments
-    assign asi_ready = stage_enable[0];
-    assign aso_valid = stage_valid[NUM_STAGES-1];
-    assign aso_data  = stage_data[NUM_STAGES-1][31:0];
+    // --------------------------------------------------------
+    // Simplified 1-Stage Pipeline (Input * Coeff)
+    // --------------------------------------------------------
 
-    /*
-    // --------------------------------------------------------
-    // REFERENCE: 2-Stage Manual Implementation
-    // --------------------------------------------------------
-    // This is how the logic looks without "generate" loop.
-    // Useful for understanding the "valid-ready" handshake pattern.
+    // Single Pipeline Stage: Output Registers
+    reg [31:0] aso_data_reg;
+    reg        aso_valid_reg; // Corrected: 1-bit flag
+    reg [31:0] last_asi_data; // DEBUG REGISTER
     
-    // Stage 1 Registers
-    reg [63:0] s1_product; 
-    reg        s1_valid;
+    // Intermediate variables for calculation
+    reg [31:0] in_swapped;
+    reg [31:0] res_calc;
 
-    // Stage 2 Registers
-    reg [31:0] s2_result;
-    reg        s2_valid;
+    
+    // Ready when output is ready or empty
+    assign asi_ready = (!aso_valid_reg) || aso_ready;
 
-    // Handshake Logic
-    // enable[i] = (Empty) || (Next Stage Ready)
-    wire s1_enable = (!s1_valid) || ( (!s2_valid) || aso_ready ); 
-    wire s2_enable = (!s2_valid) || aso_ready;
-
-    // Input Ready
-    assign asi_ready = s1_enable;
-
-    // Stage 1: Capture Input -> Multiply
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            s1_valid   <= 1'b0;
-            s1_product <= 64'd0;
-        end else if (s1_enable) begin
-            s1_valid   <= asi_valid;
-            if (asi_valid) begin
-                s1_product <= (asi_data * coeff_a);
+    always @(posedge clk or negedge reset_n) begin
+        if (!reset_n) begin
+            aso_valid_reg <= 1'b0;
+            aso_data_reg  <= 32'd0;
+            last_asi_data <= 32'd0;
+        end else begin
+            // Accept new data when ready and valid
+            if (asi_ready && asi_valid) begin
+                aso_valid_reg <= 1'b1;
+                // Swap Input (Big Endian from DMA -> Little Endian for Calculation)
+                // DMA sends [31:24] as Symbol 0 (which is LSB 0x90). So input is 0x90010000
+                // We want 0x00000190.
+                last_asi_data <= {asi_data[7:0], asi_data[15:8], asi_data[23:16], asi_data[31:24]}; 
+                
+                // STEP 2: Test with constant addition (no registers involved)
+                if (bypass) begin
+                    aso_data_reg <= asi_data; // Bypass: Pass-through (remains swapped)
+                end else begin
+                    // MULTIPLICATION MODE
+                    // 1. Swap Input
+                    in_swapped = {asi_data[7:0], asi_data[15:8], asi_data[23:16], asi_data[31:24]};
+                    
+                    // 2. Calculate (Use Reciprocal Multiplication for / 400)
+                    // 1/400 ~= 0.0025. 5243 / 2^21 ~= 0.00250005
+                    // This fits in a single cycle (unlike division)
+                    res_calc = ((in_swapped * coeff_a) * 32'd5243) >> 21;
+                    
+                    // 3. Swap Output Back (Little Endian -> Big Endian for DMA)
+                    aso_data_reg <= {res_calc[7:0], res_calc[15:8], res_calc[23:16], res_calc[31:24]};
+                end
+                
+                in_count  <= in_count + 1;
+                out_count <= out_count + 1;
+            end else if (aso_ready && aso_valid_reg) begin
+                // Output consumed, clear valid
+                aso_valid_reg <= 1'b0;
             end
+            // else: Keep current state (stall or hold)
         end
     end
 
-    // Stage 2: Shift-Add Division (/400)
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            s2_valid  <= 1'b0;
-            s2_result <= 32'd0;
-        end else if (s2_enable) begin
-            s2_valid <= s1_valid;
-            if (s1_valid) begin
-                s2_result <= ((s1_product << 10) + (s1_product << 8) + (s1_product << 5) - s1_product) >> 19;
-            end
-        end
-    end
-
-    assign aso_valid = s2_valid;
-    assign aso_data  = s2_result;
-    */
+    // Downstream Output Assignment
+    assign aso_valid = aso_valid_reg;
+    assign aso_data  = aso_data_reg;
 
 endmodule
+

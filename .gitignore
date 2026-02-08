@@ -33,7 +33,7 @@
 *.launch
 
 # Nios II Software - BSP (Generated from .sopcinfo)
-/software/cust_inst/
+/software/cust_inst_bsp/
 
 # Nios II Software - Application Build Artifacts
 /software/*/obj/
