@@ -8,8 +8,11 @@ Transition from traditional testbenches to Python-based modern verification envi
 - [x] **Avalon Interface Verification (cocotbext-avalon)**
     - [x] Prepare initial Cocotb test environment in `tests/cocotb`.
     - [x] Integrate with **Pytest** for professional SW-style testing.
-        - [ ] Run `pip install cocotb-test` in WSL.
-        - [ ] Execute `pytest test_runner.py` to run all module tests at once.
+        - [x] Run `pip install cocotb-test` in WSL.
+        - [x] Execute `pytest test_runner.py` to run all module tests at once.
+    - [x] **Waveform Viewing**:
+        - [x] Enabled `waves=True` in `test_runner.py`.
+        - [ ] View generated `.vcd` or `.fst` files in `sim_build/` using **GTKWave**.
     - [ ] Create a Unit Test environment for `stream_processor.v` using Python Mock Drivers/Monitors.
     - [ ] Implement randomized stress tests for Backpressure logic.
 - [ ] **AXI Interface Verification (cocotbext-axi)**

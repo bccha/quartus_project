@@ -30,6 +30,7 @@ def test_cocotb_modules(toplevel, module, sources):
         toplevel=toplevel,
         module=module,
         simulator="icarus",
+        waves=True, # Waveform dumping 활성화
         # 필요시 별도의 시뮬레이션 인자 전달 가능
         # sim_args=["-W", "all"], 
     )
