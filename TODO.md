@@ -5,8 +5,8 @@ This document outlines the next steps for transitioning from a Software Expert t
 ## 1. Advanced Verification (Cocotb)
 Transition from traditional testbenches to Python-based modern verification environment.
 
-- [ ] **Avalon Interface Verification (cocotbext-avalon)**
-    - [ ] Install `cocotbext-avalon`.
+- [x] **Avalon Interface Verification (cocotbext-avalon)**
+    - [x] Prepare initial Cocotb test environment in `tests/cocotb`.
     - [ ] Create a Unit Test environment for `stream_processor.v` using Python Mock Drivers/Monitors.
     - [ ] Implement randomized stress tests for Backpressure logic.
 - [ ] **AXI Interface Verification (cocotbext-axi)**
