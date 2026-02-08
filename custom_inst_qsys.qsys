@@ -153,7 +153,7 @@
    {
       datum _sortIndex
       {
-         value = "11";
+         value = "10";
          type = "int";
       }
    }
@@ -177,7 +177,7 @@
    {
       datum _sortIndex
       {
-         value = "12";
+         value = "11";
          type = "int";
       }
    }
@@ -247,20 +247,12 @@
          type = "String";
       }
    }
-   element stream_multdiv
+   element stream_multdiv_simd_0
    {
       datum _sortIndex
       {
-         value = "10";
+         value = "12";
          type = "int";
-      }
-   }
-   element stream_multdiv.avalon_slave_0_1
-   {
-      datum baseAddress
-      {
-         value = "4304";
-         type = "String";
       }
    }
    element sysid_qsys_0
@@ -437,7 +429,7 @@
   <parameter name="CHANNEL_ENABLE" value="0" />
   <parameter name="CHANNEL_WIDTH" value="8" />
   <parameter name="DATA_FIFO_DEPTH" value="64" />
-  <parameter name="DATA_WIDTH" value="32" />
+  <parameter name="DATA_WIDTH" value="128" />
   <parameter name="DESCRIPTOR_FIFO_DEPTH" value="128" />
   <parameter name="ENHANCED_FEATURES" value="0" />
   <parameter name="ERROR_ENABLE" value="0" />
@@ -480,7 +472,7 @@
   <parameter name="CHANNEL_ENABLE" value="0" />
   <parameter name="CHANNEL_WIDTH" value="8" />
   <parameter name="DATA_FIFO_DEPTH" value="64" />
-  <parameter name="DATA_WIDTH" value="32" />
+  <parameter name="DATA_WIDTH" value="128" />
   <parameter name="DESCRIPTOR_FIFO_DEPTH" value="128" />
   <parameter name="ENHANCED_FEATURES" value="0" />
   <parameter name="ERROR_ENABLE" value="0" />
@@ -526,7 +518,7 @@
   <parameter name="dataAddrWidth" value="20" />
   <parameter name="dataMasterHighPerformanceAddrWidth" value="1" />
   <parameter name="dataMasterHighPerformanceMapParam" value="" />
-  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='nios2_gen2_0.debug_mem_slave' start='0x800' end='0x1000' type='altera_nios2_gen2.debug_mem_slave' /><slave name='timer_0.s1' start='0x1000' end='0x1040' type='altera_avalon_timer.s1' /><slave name='msgdma_write.csr' start='0x1040' end='0x1060' type='altera_msgdma.csr' /><slave name='msgdma_read.csr' start='0x1060' end='0x1080' type='altera_msgdma.csr' /><slave name='dma_onchip_dp.csr' start='0x1080' end='0x10A0' type='altera_msgdma.csr' /><slave name='msgdma_write.descriptor_slave' start='0x10A0' end='0x10B0' type='altera_msgdma.descriptor_slave' /><slave name='msgdma_read.descriptor_slave' start='0x10B0' end='0x10C0' type='altera_msgdma.descriptor_slave' /><slave name='dma_onchip_dp.descriptor_slave' start='0x10C0' end='0x10D0' type='altera_msgdma.descriptor_slave' /><slave name='stream_multdiv.avalon_slave_0_1' start='0x10D0' end='0x10E0' type='stream_multdiv.avalon_slave_0_1' /><slave name='sysid_qsys_0.control_slave' start='0x10E0' end='0x10E8' type='altera_avalon_sysid_qsys.control_slave' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x10E8' end='0x10F0' type='altera_avalon_jtag_uart.avalon_jtag_slave' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0xC0000' type='altera_avalon_onchip_memory2.s1' /><slave name='mmio_0.s0' start='0xC0000' end='0xC0400' type='altera_avalon_mm_bridge.s0' /></address-map>]]></parameter>
+  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='stream_multdiv_simd_0.avalon_slave_0' start='0x0' end='0x10' type='stream_multdiv_simd.avalon_slave_0' /><slave name='nios2_gen2_0.debug_mem_slave' start='0x800' end='0x1000' type='altera_nios2_gen2.debug_mem_slave' /><slave name='timer_0.s1' start='0x1000' end='0x1040' type='altera_avalon_timer.s1' /><slave name='msgdma_write.csr' start='0x1040' end='0x1060' type='altera_msgdma.csr' /><slave name='msgdma_read.csr' start='0x1060' end='0x1080' type='altera_msgdma.csr' /><slave name='dma_onchip_dp.csr' start='0x1080' end='0x10A0' type='altera_msgdma.csr' /><slave name='msgdma_write.descriptor_slave' start='0x10A0' end='0x10B0' type='altera_msgdma.descriptor_slave' /><slave name='msgdma_read.descriptor_slave' start='0x10B0' end='0x10C0' type='altera_msgdma.descriptor_slave' /><slave name='dma_onchip_dp.descriptor_slave' start='0x10C0' end='0x10D0' type='altera_msgdma.descriptor_slave' /><slave name='sysid_qsys_0.control_slave' start='0x10E0' end='0x10E8' type='altera_avalon_sysid_qsys.control_slave' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x10E8' end='0x10F0' type='altera_avalon_jtag_uart.avalon_jtag_slave' /><slave name='onchip_memory2_0.s1' start='0x80000' end='0xC0000' type='altera_avalon_onchip_memory2.s1' /><slave name='mmio_0.s0' start='0xC0000' end='0xC0400' type='altera_avalon_mm_bridge.s0' /></address-map>]]></parameter>
   <parameter name="data_master_high_performance_paddr_base" value="0" />
   <parameter name="data_master_high_performance_paddr_size" value="0" />
   <parameter name="data_master_paddr_base" value="0" />
@@ -729,7 +721,14 @@
   <parameter name="useShallowMemBlocks" value="false" />
   <parameter name="writable" value="true" />
  </module>
- <module name="stream_multdiv" kind="stream_multdiv" version="1.0" enabled="1" />
+ <module
+   name="stream_multdiv_simd_0"
+   kind="stream_multdiv_simd"
+   version="1.0"
+   enabled="1">
+  <parameter name="LANES" value="4" />
+  <parameter name="STAGES" value="3" />
+ </module>
  <module
    name="sysid_qsys_0"
    kind="altera_avalon_sysid_qsys"
@@ -762,9 +761,9 @@
    kind="avalon"
    version="20.1"
    start="nios2_gen2_0.data_master"
-   end="stream_multdiv.avalon_slave_0_1">
+   end="stream_multdiv_simd_0.avalon_slave_0">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x10d0" />
+  <parameter name="baseAddress" value="0x0000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -923,13 +922,13 @@
  <connection
    kind="avalon_streaming"
    version="20.1"
-   start="stream_multdiv.avalon_streaming_source_0"
+   start="stream_multdiv_simd_0.avalon_streaming_source_0"
    end="msgdma_write.st_sink" />
  <connection
    kind="avalon_streaming"
    version="20.1"
    start="msgdma_read.st_source"
-   end="stream_multdiv.avalon_streaming_sink_0_1" />
+   end="stream_multdiv_simd_0.avalon_streaming_sink_0" />
  <connection kind="clock" version="20.1" start="clk_0.clk" end="nios2_gen2_0.clk" />
  <connection kind="clock" version="20.1" start="clk_0.clk" end="jtag_uart_0.clk" />
  <connection kind="clock" version="20.1" start="clk_0.clk" end="sysid_qsys_0.clk" />
@@ -945,17 +944,17 @@
    version="20.1"
    start="clk_0.clk"
    end="dma_onchip_dp.clock" />
- <connection
-   kind="clock"
-   version="20.1"
-   start="clk_0.clk"
-   end="stream_multdiv.clock" />
  <connection kind="clock" version="20.1" start="clk_0.clk" end="msgdma_read.clock" />
  <connection
    kind="clock"
    version="20.1"
    start="clk_0.clk"
    end="msgdma_write.clock" />
+ <connection
+   kind="clock"
+   version="20.1"
+   start="clk_0.clk"
+   end="stream_multdiv_simd_0.clock" />
  <connection
    kind="interrupt"
    version="20.1"
@@ -1047,7 +1046,7 @@
    kind="reset"
    version="20.1"
    start="clk_0.clk_reset"
-   end="stream_multdiv.reset" />
+   end="stream_multdiv_simd_0.reset" />
  <connection
    kind="reset"
    version="20.1"
@@ -1097,7 +1096,7 @@
    kind="reset"
    version="20.1"
    start="nios2_gen2_0.debug_reset_request"
-   end="stream_multdiv.reset" />
+   end="stream_multdiv_simd_0.reset" />
  <connection
    kind="reset"
    version="20.1"

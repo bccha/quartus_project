@@ -417,8 +417,22 @@ void start_dma_transfer() {
 
 실제 하드웨어에서 테스트를 수행한 결과는 다음과 같습니다:
 
-![Nios II 성능 측정 결과](./images/image_nios_result.png)
-*(그림: Nios II 콘솔 출력 화면 - HW 사이클이 SW 사이클보다 현저히 적음을 볼 수 있음)*
+### 🚀 최종 성능 측정 결과 (128-bit SIMD 적용)
+Nios II 콘솔에서 측정한 벤치마크 결과입니다. 128비트 SIMD 적용 후, **소프트웨어 대비 약 85배**의 성능 향상을 달성했습니다.
+
+```text
+=== MULTIPLICATION MODE TEST ===
+Stream Processing Done. Cycles: 1636 (Time: 32 us)
+[CPU Benchmark Done]
+- Hardware Cycles: 1636 (32 us)
+- Software Cycles: 140504 (2810 us)
+>> Speedup: 85.88x faster!
+```
+
+**주요 성과:**
+*   **DMA 전송 속도**: CPU 복사 대비 **8.25배** 빠름 (Offload Ratio)
+*   **스트림 데이터 처리 (Bypass)**: 32비트 대비 **7.56배** 처리량 증가
+*   **연산 가속 (Multiplication)**: 순수 소프트웨어 연산 대비 **85.88배** 가속
 
 위 결과 이미지에서 볼 수 있듯이, 동일한 연산에 대해 Custom Instruction을 사용한 하드웨어 연산(HW Cycles)이 소프트웨어 연산(SW Cycles)보다 훨씬 적은 사이클을 소모하며, 이를 통해 확실한 가속 효과를 입증했습니다.
 
@@ -754,10 +768,65 @@ gtkwave sim_build/stream_processor/dump.vcd
 
 ---
 
-## 마무리하며
+
+---
+
+## 챕터 7: 128비트 SIMD 아키텍처 (Final Evolution)
+
+단일 파이프라인(32비트)으로는 메모리 대역폭을 완전히 활용하지 못한다는 점을 발견하고, 데이터 폭을 4배로 확장하여 병렬 처리를 극대화하는 **SIMD(Single Instruction Multiple Data)** 아키텍처로 진화했습니다.
+
+### 1-Lane vs 4-Lane 구조 비교
+
+*   **기존 (1-Lane)**: 32비트 데이터 1개를 받아 1개의 결과 출력. (DSP 1개 사용)
+*   **SIMD (4-Lane)**: **128비트** 데이터를 받아 내부적으로 4개의 32비트 청크로 쪼갠 뒤, **4개의 DSP**가 동시에 연산 수행.
+
+### 하드웨어 구현 (`stream_processor_simd.v`)
+
+```verilog
+// 128비트 입력을 4개의 32비트 Lane으로 분할하여 병렬 처리
+genvar i;
+generate
+    for (i = 0; i < 4; i = i + 1) begin : lanes
+        // 각 Lane은 독립적인 곱셈기 및 Shift-Add 로직을 가짐
+        always @(posedge clk) begin
+            // Stage 0: Input Capture & Endian Swap
+            stage_data[0] <= {asi_data[i*32 + 7 : i*32 + 0], ...}; // Little->Big
+            
+            // Stage 1: Multiplication
+            intermediate_prod <= stage_data[0] * coeff;
+            
+            // Stage 2: Division & Output Swap
+            result_chunk <= (intermediate_prod * 5243) >> 21;
+        end
+    end
+endgenerate
+```
+
+### 128비트 엔디안(Endianness)의 재발견
+
+32비트 시스템에서 128비트 버스로 확장하면서 **데이터 정렬(Alignment)**과 **바이트 순서(Ordering)** 문제가 훨씬 복잡해졌습니다.
+
+1.  **메모리 정렬**: 128비트(16바이트) 전송을 위해 소스/목적지 주소가 반드시 **16바이트(또는 32바이트) 단위로 정렬**되어야 합니다. 소프트웨어에서 `__attribute__((aligned(32)))`를 사용해 해결했습니다.
+2.  **패킹 순서 (Packing Order)**: 128비트 데이터 내부에서 4개의 32비트 정수가 `[0, 1, 2, 3]` 순서로 있는지, `[3, 2, 1, 0]` 역순으로 있는지 확인이 필요했습니다. (실험 결과: 리틀 엔디안 시스템에서는 하위 비트 `[31:0]`에 첫 번째 정수가 위치함)
+
+### 🚀 최종 성과 (The Grand Finale)
+
+이 모든 최적화(DMA Offload + Pipelining + 4-Lane SIMD)를 적용한 결과는 다음과 같습니다.
+
+*   **Bypass 모드 (단순 전송)**: CPU 복사 대비 **7.56배** 속도
+    *   메모리 대역폭 한계까지 데이터를 밀어넣음.
+*   **Multiplication 모드 (연산 가속)**: 소프트웨어 연산 대비 **85.88배** 속도
+    *   소프트웨어(Nios II)가 수십만 사이클 동안 끙끙대며 계산할 내용을, 하드웨어는 단 32us 만에 끝냈습니다.
+
+> **결론**: FPGA의 진정한 힘은 단순한 클럭 속도가 아니라, **병렬성(Parallelism)**과 **전용 하드웨어(Dedicated Hardware)**를 통한 데이터 처리 효율에 있음을 증명했습니다.
+
+---
+
+## 마무리하며 (Closing)
 
 이번 프로젝트를 통해 **Custom Instruction**과 **mSGDMA**, 그리고 **RTL 최적화**가 결합되었을 때 얼마나 강력한 성능(86배 속도 향상)을 낼 수 있는지 확인했습니다. 
 
-특히 단순히 "작동하는 코드"를 넘어, **엔디안 문제 해결**, **고정 소수점 연산 최적화**, **N단 파이프라인 설계**, 그리고 **전문적인 Cocotb/pytest 검증 환경**까지 실전 FPGA 설계에서 마주치는 핵심 과제들을 하나씩 정면 돌파했다는 점에서 큰 의미가 있습니다.
+특히 단순히 "작동하는 코드"를 넘어, **엔디안 문제 해결**, **고정 소수점 연산 최적화**, **SIMD 병렬 아키텍처**, 그리고 **전문적인 Cocotb/pytest 검증 환경**까지 실전 FPGA 설계에서 마주치는 핵심 과제들을 하나씩 정면 돌파했다는 점에서 큰 의미가 있습니다.
 
 이 기록이 미래의 나, 혹은 이 시스템을 유지보수할 다른 동료에게 좋은 안내서가 되기를 바랍니다.
+

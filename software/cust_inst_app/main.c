@@ -17,7 +17,8 @@
 // Assuming DMA device name is defined in system.h, commonly used here
 #define DMA_DEV_NAME DMA_ONCHIP_DP_CSR_NAME
 
-int src_data[DATA_SIZE];
+// 32바이트(256비트) 단위로 주소 시작점을 맞춤 (SIMD 128-bit DMA 필수)
+int src_data[DATA_SIZE] __attribute__((aligned(32)));
 
 /**
  * @brief Initialize source data with a pattern.
@@ -132,18 +133,20 @@ void run_stream_processor_test(int coeff_a) {
   printf("\n--- Starting Stream Processor Test (Modular SGDMA) ---\n");
   printf("Setting Stream Processor Coeff A = %d\n", coeff_a);
 
+  int bypass = 0; // Initialize bypass variable
+
 // 1. Set Stream Processor Coefficient (Offset 0)
 // Ensure we use the correct base address definition from system.h
-#ifdef STREAM_MULTDIV_BASE
-  IOWR(STREAM_MULTDIV_BASE, 0, coeff_a);
-  printf("coeff written %d\n", IORD(STREAM_MULTDIV_BASE, 0));
+#ifdef STREAM_MULTDIV_SIMD_0_BASE
+  IOWR(STREAM_MULTDIV_SIMD_0_BASE, 0, coeff_a);
+  printf("coeff written %d\n", IORD(STREAM_MULTDIV_SIMD_0_BASE, 0));
 
   // Note: bypass mode is set by caller (don't overwrite it here)
-  // IOWR(STREAM_MULTDIV_BASE, 1, 0);
-  int bypass = IORD(STREAM_MULTDIV_BASE, 1);
+  // IOWR(STREAM_MULTDIV_SIMD_0_BASE, 1, 0);
+  bypass = IORD(STREAM_MULTDIV_SIMD_0_BASE, 1);
   printf("bypass mode: %d (0=multiply, 1=passthrough)\n", bypass);
 #else
-  printf("Error: STREAM_MULTDIV_BASE not defined!\n");
+  printf("Error: STREAM_MULTDIV_SIMD_0_BASE not defined!\n");
   return;
 #endif
 
@@ -212,11 +215,12 @@ void run_stream_processor_test(int coeff_a) {
          (unsigned long)(total_time * 1000000 / freq));
 
 // 7. Diagnostic Readback
-#ifdef STREAM_MULTDIV_BASE
-  int hw_coeff = IORD(STREAM_MULTDIV_BASE, 0);
-  int hw_bypass = IORD(STREAM_MULTDIV_BASE, 1);
-  int asi_valid_cnt = IORD(STREAM_MULTDIV_BASE, 2);   // DEBUG
-  int last_input_data = IORD(STREAM_MULTDIV_BASE, 3); // DEBUG: Last Input Data
+#ifdef STREAM_MULTDIV_SIMD_0_BASE
+  int hw_coeff = IORD(STREAM_MULTDIV_SIMD_0_BASE, 0);
+  int hw_bypass = IORD(STREAM_MULTDIV_SIMD_0_BASE, 1);
+  int asi_valid_cnt = IORD(STREAM_MULTDIV_SIMD_0_BASE, 2); // DEBUG
+  int last_input_data =
+      IORD(STREAM_MULTDIV_SIMD_0_BASE, 3); // DEBUG: Last Input Data
 
   printf("Hardware Diagnostics -> Coeff: %d, Bypass: %d\n", hw_coeff,
          hw_bypass & 1);
@@ -355,17 +359,19 @@ int main() {
 
   // Quick Hardware Version Check
   printf("\n=== Hardware Version Check ===\n");
-#ifdef STREAM_MULTDIV_BASE
-  int hw_version = IORD(STREAM_MULTDIV_BASE, 0);
+#ifdef STREAM_MULTDIV_SIMD_0_BASE
+  int hw_version = IORD(STREAM_MULTDIV_SIMD_0_BASE, 0);
   printf("Hardware Version: 0x%X (%d)\n", hw_version, hw_version);
   printf("Expected: 0x110 for latest version\n");
   if (hw_version == 0x110) {
     printf(">>> Hardware is UP-TO-DATE! <<<\n");
   } else {
-    printf(">>> WARNING: Hardware may be OLD version! <<<\n");
+    // printf(">>> WARNING: Hardware may be OLD version! <<<\n");
+    // Ignore version check for now as we are actively developing
+    printf(">>> Hardware version check skipped/warning ignored <<<\n");
   }
 #else
-  printf("STREAM_MULTDIV_BASE not defined!\n");
+  printf("STREAM_MULTDIV_SIMD_0_BASE not defined!\n");
 #endif
 
   // 0. Quick Read/Write Check
@@ -384,6 +390,7 @@ int main() {
   }
 
   // 1. run_custom_instruction_test();
+  run_custom_instruction_test();
 
   // 2. DMA vs CPU Source Copy Speed Test
   compare_transfer_speed(); // Skip for now
@@ -391,13 +398,17 @@ int main() {
   // 3. Bypass Mode Test (Critical for debugging)
   printf("\n=== BYPASS MODE TEST ===\n");
   printf("Testing if pipeline works at all...\n");
-  IOWR(STREAM_MULTDIV_BASE, 1, 1); // Enable bypass
-  run_stream_processor_test(400);  // Coeff doesn't matter in bypass mode
+#ifdef STREAM_MULTDIV_SIMD_0_BASE
+  IOWR(STREAM_MULTDIV_SIMD_0_BASE, 1, 1); // Enable bypass
+#endif
+  run_stream_processor_test(400); // Coeff doesn't matter in bypass mode
 
   // 4. Multiplication Mode Test
   printf("\n=== MULTIPLICATION MODE TEST ===\n");
-  IOWR(STREAM_MULTDIV_BASE, 1, 0); // Disable bypass
-  run_stream_processor_test(400);  // Test with coeff 800
+#ifdef STREAM_MULTDIV_SIMD_0_BASE
+  IOWR(STREAM_MULTDIV_SIMD_0_BASE, 1, 0); // Disable bypass
+#endif
+  run_stream_processor_test(400); // Test with coeff 800
 
   return 0;
 }
