@@ -12,25 +12,26 @@ PROJ_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
         [
             os.path.join(PROJ_PATH, "RTL", "my_slave.v"),
             os.path.join(PROJ_PATH, "ip", "dpram.v"),
-            os.path.join(os.path.dirname(__file__), "sim_models", "altsyncram.v")
+            os.path.join(os.path.dirname(__file__), "sim_models", "altsyncram.v"),
+            os.path.join(os.path.dirname(__file__), "cocotb_dump.v")
         ]
     ),
     (
         "stream_processor", 
         "tb_stream_processor_avs", 
         [
-            os.path.join(PROJ_PATH, "RTL", "stream_processor.v")
+            os.path.join(PROJ_PATH, "RTL", "stream_processor.v"),
+            os.path.join(os.path.dirname(__file__), "cocotb_dump.v")
         ]
     ),
 ])
 def test_cocotb_modules(toplevel, module, sources):
-    """Pytest runner for Cocotb tests"""
+    """Pytest runner for Cocotb tests with manual waveform dumping"""
     run(
         verilog_sources=sources,
         toplevel=toplevel,
         module=module,
         simulator="icarus",
-        waves=True, # Waveform dumping 활성화
-        # 필요시 별도의 시뮬레이션 인자 전달 가능
-        # sim_args=["-W", "all"], 
+        sim_args=["-s", "cocotb_dump"], # cocotb_dump를 추가 top-level로 포함
+        # waves=True, # Manual dumping 사용을 위해 비활성화
     )
