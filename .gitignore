@@ -47,7 +47,17 @@
 # VS Code Local Configuration
 .vscode/
 
+# Agent Configuration
+.agent/
+
 # OS System Files
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Cocotb/Pytest Testing Artifacts
+tests/cocotb/sim_build/
+tests/cocotb/__pycache__/
+tests/cocotb/*.pyc
+tests/cocotb/*_results.xml
+tests/cocotb/results.xml
