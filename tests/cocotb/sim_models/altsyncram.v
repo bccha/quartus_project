@@ -50,16 +50,31 @@ module altsyncram (
 
     reg [31:0] mem [0:255];
 
-    // Port A: Write
+    // Initialize memory to prevent Unknown (X) states
+    integer j;
+    initial begin
+        for (j = 0; j < 256; j = j + 1) begin
+            mem[j] = 32'd0;
+        end
+    end
+
+    // Port A: Read/Write (Stabilized)
+    wire [31:0] q_a_next;
+    assign q_a_next = mem[address_a];
+
     always @(posedge clock0) begin
         if (wren_a) begin
             mem[address_a] <= data_a;
         end
+        q_a <= q_a_next;
     end
 
-    // Port B: Read
+    // Port B: Read (Stabilized with intermediate wire)
+    wire [31:0] q_b_next;
+    assign q_b_next = mem[address_b];
+
     always @(posedge clock0) begin
-        q_b <= mem[address_b];
+        q_b <= q_b_next;
     end
 
     assign eccstatus = 2'b00;

@@ -37,6 +37,7 @@ async def test_avs_read_write(dut):
     
     # Avalon-MM Latency: readdata is valid 1 cycle after read assertion
     # Based on my_slave.v: readdatavalid <= read
+    dut.read.value = 0
     await RisingEdge(dut.clk)
     
     readdata = dut.readdata.value

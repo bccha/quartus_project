@@ -13,6 +13,7 @@ Transition from traditional testbenches to Python-based modern verification envi
     - [x] **Waveform Viewing**:
         - [x] Enabled `waves=True` in `test_runner.py`.
         - [ ] View generated `.vcd` or `.fst` files in `sim_build/` using **GTKWave**.
+        - [ ] Run `make pytest_clean` to remove simulation artifacts and XML logs.
     - [ ] Create a Unit Test environment for `stream_processor.v` using Python Mock Drivers/Monitors.
     - [ ] Implement randomized stress tests for Backpressure logic.
 - [ ] **AXI Interface Verification (cocotbext-axi)**
