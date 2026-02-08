@@ -265,6 +265,16 @@ This expression handles all of the following scenarios:
 | **2. Flowing state** | `pipe_valid[i]=1`, `pipe_valid[i+1]=0` | **Ready** | Since current data can be pushed to the next cell, it receives new data. |
 | **3. Full state** | All `pipe_valid=1` | Depends on `aso_ready` | If output goes out (`aso_ready=1`), everything moves by one cell like dominoes. If output is blocked, everything Stalls. |
 
+Furthermore, generalizing this with a `generate` statement results in code applicable to any number of stages:
+
+```verilog
+for (i = 0; i < STAGES; i = i + 1) begin : gen_handshake
+    // Condition for current stage to receive data (Ready):
+    // "I am currently empty (!pipe_valid[i])" OR "The next stage can take mine (pipe_ready[i+1])"
+    assign pipe_ready[i] = !pipe_valid[i] || pipe_ready[i+1];
+end
+```
+
 This structure can be expanded with the same rules no matter how many pipeline stages increase, and it is an **industry-standard handshake** method that guarantees accurate data flow without a FIFO.
 
 ---

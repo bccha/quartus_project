@@ -270,6 +270,16 @@ assign asi_ready = pipe_ready[0];
 | **2. 흐르는 상태** | `pipe_valid[i]=1`, `pipe_valid[i+1]=0` | **Ready** | 현재 데이터를 다음 칸으로 밀어낼 수 있으므로 새 데이터를 받음. |
 | **3. 꽉 찬 상태** | 전체 `pipe_valid=1` | `aso_ready`에 의존 | 출력이 나가면(`aso_ready=1`) 전체가 도미노처럼 한 칸씩 이동. 출력이 막히면 전체 Stall. |
 
+또한, 이를 `generate` 문으로 일반화하면 다음과 같이 어떤 단계에서도 적용 가능한 코드가 됩니다.
+
+```verilog
+for (i = 0; i < STAGES; i = i + 1) begin : gen_handshake
+    // 현재 단계가 데이터를 받을 수 있는 조건 (Ready):
+    // "내가 현재 비어있거나(!pipe_valid[i])" OR "다음 단계가 내껄 가져갈 수 있거나(pipe_ready[i+1])"
+    assign pipe_ready[i] = !pipe_valid[i] || pipe_ready[i+1];
+end
+```
+
 이 구조는 파이프라인 단계(Stage)가 아무리 늘어나도 동일한 규칙으로 확장 가능하며, FIFO 없이도 정확한 데이터 흐름을 보장하는 **산업 표준 핸드셰이크** 방식입니다.
 
 ---
