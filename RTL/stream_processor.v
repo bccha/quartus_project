@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module stream_processor (
     input  wire        clk,
     input  wire        reset_n,

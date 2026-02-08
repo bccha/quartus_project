@@ -4,16 +4,16 @@ from cocotb.clock import Clock
 
 async def reset_dut(reset_n, duration_ns):
     reset_n.value = 0
-    await Timer(duration_ns, units="ns")
+    await Timer(duration_ns, unit="ns")
     reset_n.value = 1
-    await Timer(duration_ns, units="ns")
+    await Timer(duration_ns, unit="ns")
 
 @cocotb.test()
 async def test_stream_processor_avs(dut):
     """Test Avalon-MM Slave interface of stream_processor"""
     
     # Start Clock (50MHz)
-    cocotb.start_soon(Clock(dut.clk, 20, units="ns").start())
+    cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
     
     # Reset
     await reset_dut(dut.reset_n, 40)

@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module my_custom_slave (
     input  wire        clk,
     input  wire        reset_n,
