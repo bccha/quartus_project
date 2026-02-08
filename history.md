@@ -76,21 +76,16 @@ An important detail often overlooked during implementation is how to align the C
 Standard Nios II processors do not have a hardware floating-point unit by default, and integer division is computationally very expensive (takes many cycles). We needed a way to extremely quickly process a specific arithmetic operation of multiplying two numbers and then dividing by 400.
 
 ### Optimization: Use Shift-Add Instead of Division
-Hardware dividers consume many logic resources and timing. Instead of using a raw divider, we adopted a mathematical approximation method using **bit shift and addition (Shift-Add)**.
+Hardware dividers consume significant logic resources and timing budget. Instead of using a raw divider, we adopted a mathematical approximation method using **bit shift and multiplication (Shift-Add)**.
 
 **Mathematical Principle:**
 We want to calculate $result = (A \times B) / 400$.
 Dividing by 400 is similar to multiplying by 0.0025.
-We found that multiplying by 1311 and shifting to the right by 19 bits gives a very precise approximation:
+We chose $Q=21$ for even higher precision. We found that multiplying by 5243 and shifting to the right by 21 bits gives a very precise approximation:
 
-$$ \frac{1311}{2^{19}} = \frac{1311}{524288} \approx 0.00250053 $$
+$$ \frac{5243}{2^{21}} = \frac{5243}{2097152} \approx 0.00249995 $$
 
-The error of this method is only **0.02%**, which is at an acceptable level for our application.
-To avoid a general multiplier, we constructed the number 1311 as a sum and difference of powers of 2:
-
-$$
-1311 = 1024 + 256 + 32 - 1 = (2^{10} + 2^8 + 2^5 - 2^0)
-$$
+The error of this method is only **0.0018%**, which is almost negligible for our application.
 
 **Implementation Code (`RTL/my_multi_calc.v`):**
 ```verilog
@@ -103,9 +98,9 @@ $$
             // [Cycle 1] Hardware Multiplication
             mult_stage <= 64'd1 * dataa * datab;
             
-    // [Cycle 2] Optimization: Use Shift-Add instead of divider
-            // Logic: (val * 1311) >> 19
-            result <= ((mult_stage << 10) + (mult_stage << 8) + (mult_stage << 5) - mult_stage) >> 19;      
+            // [Cycle 2] Optimization: Use Shift-Add instead of divider (K=5243, Q=21)
+            // Logic: (val * 5243) >> 21
+            result <= (mult_stage * 64'd5243) >> 21;      
         end
     end
 ```

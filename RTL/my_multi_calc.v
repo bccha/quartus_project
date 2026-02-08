@@ -20,9 +20,8 @@ module my_div (
             mult_stage <= 64'd1 * dataa * datab;
             
             // [Cycle 2] 최적화: 곱셈기 대신 Shift-Add 사용
-            // * 1311 / 2^19 ≈ 1/400 (오차 0.02%)
-            // * 1311 = * (1024 + 256 + 32 - 1) = (x<<10) + (x<<8) + (x<<5) - x
-            result <= ((mult_stage << 10) + (mult_stage << 8) + (mult_stage << 5) - mult_stage) >> 19;      
+            // * 5243 / 2^21 ≈ 1/400 (오차 0.0018%)
+            result <= (mult_stage * 64'd5243) >> 21;
         end
     end
 
