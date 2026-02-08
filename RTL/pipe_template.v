@@ -29,37 +29,37 @@ module pipe_template #(
     // --------------------------------------------------------
     // 1. 제어 신호 및 데이터 레지스터 선언
     // --------------------------------------------------------
-    reg [STAGES-1:0] v_pipe;                          // Valid 파이프라인 (앞->뒤)
-    wire [STAGES:0]   r_pipe;                          // Ready 파이프라인 (뒤->앞)
+    reg [STAGES-1:0] pipe_valid;                      // Valid 파이프라인 (앞->뒤)
+    wire [STAGES:0]   pipe_ready;                      // Ready 파이프라인 (뒤->앞)
     reg [DATA_WIDTH-1:0] d_pipe [0:STAGES-1];        // 데이터 파이프라인 레지스터
 
     // --------------------------------------------------------
     // 2. 백프레셔(Backpressure) 로직: Ready 신호의 역전파
     // --------------------------------------------------------
-    assign r_pipe[STAGES] = aso_ready; // 최종 출력단의 준비 상태
+    assign pipe_ready[STAGES] = aso_ready; // 최종 출력단의 준비 상태
 
     genvar i;
     generate
         for (i = 0; i < STAGES; i = i + 1) begin : gen_handshake
             // 현재 단계가 데이터를 받을 수 있는 조건 (Ready):
-            // "내가 현재 비어있거나(!v_pipe[i])" OR "다음 단계가 내껄 가져갈 수 있거나(r_pipe[i+1])"
-            assign r_pipe[i] = !v_pipe[i] || r_pipe[i+1];
+            // "내가 현재 비어있거나(!pipe_valid[i])" OR "다음 단계가 내껄 가져갈 수 있거나(pipe_ready[i+1])"
+            assign pipe_ready[i] = !pipe_valid[i] || pipe_ready[i+1];
         end
     endgenerate
 
-    assign asi_ready = r_pipe[0]; // 최종 입력단 준비 신호
+    assign asi_ready = pipe_ready[0]; // 최종 입력단 준비 신호
 
     // --------------------------------------------------------
     // 3. 파이프라인 데이터 흐름
     // --------------------------------------------------------
     always @(posedge clk or negedge reset_n) begin
         if (!reset_n) begin
-            v_pipe <= {STAGES{1'b0}};
+            pipe_valid <= {STAGES{1'b0}};
         end else begin
             
             // --- [Stage 0]: 첫 번째 단계 ---
-            if (r_pipe[0]) begin
-                v_pipe[0] <= asi_valid;
+            if (pipe_ready[0]) begin
+                pipe_valid[0] <= asi_valid;
                 if (asi_valid) begin
                     // TODO: 첫 번째 단계의 연산/로직을 여기에 작성
                     d_pipe[0] <= asi_data; 
@@ -72,9 +72,9 @@ module pipe_template #(
             /*
             integer j;
             for (j = 1; j < STAGES; j = j + 1) begin
-                if (r_pipe[j]) begin
-                    v_pipe[j] <= v_pipe[j-1];
-                    if (v_pipe[j-1]) begin
+                if (pipe_ready[j]) begin
+                    pipe_valid[j] <= pipe_valid[j-1];
+                    if (pipe_valid[j-1]) begin
                         // TODO: j번째 단계의 연산/로직을 여기에 작성
                         d_pipe[j] <= d_pipe[j-1] + 1; 
                     end
@@ -83,14 +83,14 @@ module pipe_template #(
             */
 
             // 예시: 명시적 3단 구성 시
-            if (STAGES >= 2 && r_pipe[1]) begin
-                v_pipe[1] <= v_pipe[0];
-                if (v_pipe[0]) d_pipe[1] <= d_pipe[0]; // Stage 1 로직
+            if (STAGES >= 2 && pipe_ready[1]) begin
+                pipe_valid[1] <= pipe_valid[0];
+                if (pipe_valid[0]) d_pipe[1] <= d_pipe[0]; // Stage 1 로직
             end
 
-            if (STAGES >= 3 && r_pipe[2]) begin
-                v_pipe[2] <= v_pipe[1];
-                if (v_pipe[1]) d_pipe[2] <= d_pipe[1]; // Stage 2 로직
+            if (STAGES >= 3 && pipe_ready[2]) begin
+                pipe_valid[2] <= pipe_valid[1];
+                if (pipe_valid[1]) d_pipe[2] <= d_pipe[1]; // Stage 2 로직
             end
 
         end
@@ -99,7 +99,7 @@ module pipe_template #(
     // --------------------------------------------------------
     // 4. 최종 출력 할당
     // --------------------------------------------------------
-    assign aso_valid = v_pipe[STAGES-1];
+    assign aso_valid = pipe_valid[STAGES-1];
     assign aso_data  = d_pipe[STAGES-1];
 
 endmodule

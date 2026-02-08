@@ -246,22 +246,36 @@ Avalon-Streaming 인터페이스를 사용한 **Stream Processor**(`stream_proce
 2.  **Next Valid (`s2_valid`)**: 다음 단계가 꽉 찼는가?
 3.  **Output Ready (`aso_ready`)**: 최종 출력이 나갈 수 있는가?
 
-#### 파이프라인 제어 논리
+#### 파이프라인 제어 논리 (Backpressure Chain)
+
+실제 3단계 파이프라인(Stage 0, 1, 2)에서 `Ready` 신호가 뒤에서 앞으로 어떻게 소생사(Chain)처럼 연결되는지 명시적으로 풀어서 써보면 다음과 같습니다.
 
 ```verilog
-// 다음 단계로 데이터를 넘길 수 있는 조건 (Handshake)
-wire s1_enable = (!s1_valid) || ( (!s2_valid) || aso_ready ); 
+// 1. Stage 2 (마지막 단계)의 준비 상태:
+// "데이터가 없거나" OR "다음 단계(mSGDMA)에서 가져갈 수 있을 때"
+assign pipe_ready[2] = (!pipe_valid[2]) || aso_ready;
+
+// 2. Stage 1 (중간 단계)의 준비 상태:
+// "데이터가 없거나" OR "다음 단계(Stage 2)가 비었거나 가져갈 준비가 됐을 때"
+assign pipe_ready[1] = (!pipe_valid[1]) || pipe_ready[2];
+
+// 3. Stage 0 (첫 번째 단계)의 준비 상태:
+// "데이터가 없거나" OR "다음 단계(Stage 1)가 비었거나 가져갈 준비가 됐을 때"
+assign pipe_ready[0] = (!pipe_valid[0]) || pipe_ready[1];
+
+// 최종적으로 맨 앞단(Sink)에 알림
+assign asi_ready = pipe_ready[0];
 ```
 
 이 식은 다음과 같은 시나리오를 모두 처리합니다:
 
-| 시나리오 | 상태 설명 | 동작 (`enable`) | 결과 |
+| 시나리오 | 상태 설명 | 동작 (`Ready`) | 결과 |
 | :--- | :--- | :--- | :--- |
-| **1. 빈 상태** | `s1_valid=0` | **Enable** | 빈자리이므로 새 데이터를 받음. |
-| **2. 흐르는 상태** | `s1`참, `s2`빔 | **Enable** | `s1` 데이터를 `s2`로 밀어내고, 새 데이터를 받음. |
-| **3. 꽉 찬 상태** | `s1`참, `s2`참 | `aso_ready`에 의존 | 출력이 나가면(`ready=1`) 전체가 한 칸씩 이동. 출력이 막히면(`ready=0`) 전체 Stall. |
+| **1. 빈 상태** | `pipe_valid[i]=0` | **Ready** | 빈자리이므로 앞 단계의 데이터를 즉시 받음. |
+| **2. 흐르는 상태** | `pipe_valid[i]=1`, `pipe_valid[i+1]=0` | **Ready** | 현재 데이터를 다음 칸으로 밀어낼 수 있으므로 새 데이터를 받음. |
+| **3. 꽉 찬 상태** | 전체 `pipe_valid=1` | `aso_ready`에 의존 | 출력이 나가면(`aso_ready=1`) 전체가 도미노처럼 한 칸씩 이동. 출력이 막히면 전체 Stall. |
 
-이 구조는 파이프라인 단계(Stage)가 아무리 늘어나도 동일한 점화식(`enable[i] = !valid[i] || enable[i+1]`)으로 확장 가능하며, FIFO 없이도 정확한 데이터 흐름을 보장합니다.
+이 구조는 파이프라인 단계(Stage)가 아무리 늘어나도 동일한 규칙으로 확장 가능하며, FIFO 없이도 정확한 데이터 흐름을 보장하는 **산업 표준 핸드셰이크** 방식입니다.
 
 ---
 

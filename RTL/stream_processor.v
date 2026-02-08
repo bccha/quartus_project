@@ -79,8 +79,8 @@ module stream_processor (
     parameter STAGES = 3;
 
     // 파이프라인 제어 신호
-    reg [STAGES-1:0] v_pipe;        // 유효 비트 (Valid bits)
-    wire [STAGES:0]   r_pipe;        // 준비 비트 (Ready bits - Backpressure)
+    reg [STAGES-1:0] pipe_valid;    // 유효 비트 (Valid bits)
+    wire [STAGES:0]   pipe_ready;    // 준비 비트 (Ready bits - Backpressure)
     
     // 파이프라인 데이터 레지스터 (배열)
     reg [31:0] stage_data [0:STAGES-1]; 
@@ -88,15 +88,15 @@ module stream_processor (
     reg [31:0] last_asi_data;           
 
     // [백프레셔 전파]
-    assign r_pipe[STAGES] = aso_ready;
+    assign pipe_ready[STAGES] = aso_ready;
     genvar i;
     generate
         for (i = 0; i < STAGES; i = i + 1) begin : gen_ready
-            assign r_pipe[i] = !v_pipe[i] || r_pipe[i+1];
+            assign pipe_ready[i] = !pipe_valid[i] || pipe_ready[i+1];
         end
     endgenerate
 
-    assign asi_ready = r_pipe[0];
+    assign asi_ready = pipe_ready[0];
 
     // 내부 연산 결과 저장을 위한 reg (always 내부 사용)
     reg [63:0] auto_res_calc;
@@ -104,7 +104,7 @@ module stream_processor (
     // 파이프라인 메인 로직
     always @(posedge clk or negedge reset_n) begin
         if (!reset_n) begin
-            v_pipe <= {STAGES{1'b0}};
+            pipe_valid <= {STAGES{1'b0}};
             intermediate_prod <= 64'd0;
             last_asi_data <= 32'd0;
             auto_res_calc <= 64'd0;
@@ -113,8 +113,8 @@ module stream_processor (
         end else begin
             
             // --- [Stage 0]: 입력 및 엔디안 변환 ---
-            if (r_pipe[0]) begin
-                v_pipe[0] <= asi_valid;
+            if (pipe_ready[0]) begin
+                pipe_valid[0] <= asi_valid;
                 if (asi_valid) begin
                     stage_data[0] <= {asi_data[7:0], asi_data[15:8], asi_data[23:16], asi_data[31:24]};
                     last_asi_data <= {asi_data[7:0], asi_data[15:8], asi_data[23:16], asi_data[31:24]};
@@ -123,9 +123,9 @@ module stream_processor (
             end
 
             // --- [Stage 1]: 중간 곱셈 ---
-            if (r_pipe[1]) begin
-                v_pipe[1] <= v_pipe[0];
-                if (v_pipe[0]) begin
+            if (pipe_ready[1]) begin
+                pipe_valid[1] <= pipe_valid[0];
+                if (pipe_valid[0]) begin
                     if (bypass) begin
                         stage_data[1] <= stage_data[0];
                     end else begin
@@ -135,9 +135,9 @@ module stream_processor (
             end
 
             // --- [Stage 2]: 최종 역수 곱셈 및 엔디안 복원 ---
-            if (r_pipe[2]) begin
-                v_pipe[2] <= v_pipe[1];
-                if (v_pipe[1]) begin
+            if (pipe_ready[2]) begin
+                pipe_valid[2] <= pipe_valid[1];
+                if (pipe_valid[1]) begin
                     if (bypass) begin
                         stage_data[2] <= {stage_data[1][7:0], stage_data[1][15:8], stage_data[1][23:16], stage_data[1][31:24]};
                     end else begin
@@ -151,7 +151,7 @@ module stream_processor (
     end
 
     // 최종 출력 할당
-    assign aso_valid = v_pipe[STAGES-1];
+    assign aso_valid = pipe_valid[STAGES-1];
     assign aso_data  = stage_data[STAGES-1];
 
 endmodule
