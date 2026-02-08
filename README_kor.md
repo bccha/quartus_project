@@ -71,7 +71,7 @@ Stage 2: 나눗셈 근사 & 최종 엔디안 스왑
 
 ## 🏗️ 시스템 아키텍처
 
-![System Architecture](./images/system_architecture_1770538427698.png)
+![System Architecture](./images/system_architecture_simd_1770584282890.png)
 
 
 
