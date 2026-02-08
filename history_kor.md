@@ -530,10 +530,234 @@ $$ \text{Result} = (\text{Input} \times \text{Coeff} \times 5243) \gg 21 $$
 
 ---
 
+## 챕터 4: Cocotb 기반 검증 환경 구축
+
+### 왜 Cocotb인가?
+
+하드웨어 설계를 했다면, **제대로 검증(Verification)**하는 것이 필수입니다. 전통적인 Verilog 테스트벤치는 작성하기 번거롭고, 복잡한 시나리오를 다루기엔 유연성이 부족합니다. 우리는 **Cocotb**라는 Python 기반 하드웨어 검증 프레임워크를 선택했습니다.
+
+**Cocotb의 장점:**
+- **Python의 강력함**: 복잡한 테스트 시나리오를 간결하고 읽기 쉬운 Python 코드로 작성
+- **비동기 처리**: `async/await` 문법으로 클록 사이클을 명시적으로 관리
+- **재사용성**: 검증 컴포넌트(Driver, Monitor)를 모듈화하여 여러 프로젝트에 활용 가능
+- **업계 표준 시뮬레이터 지원**: Icarus Verilog, ModelSim, Verilator 등 다양한 시뮬레이터와 호환
+
+### Pytest 통합: 전문가 수준의 워크플로우
+
+단순히 Cocotb만 사용하는 것을 넘어, **pytest**와 통합하여 소프트웨어 개발자처럼 하드웨어를 검증할 수 있는 환경을 구축했습니다.
+
+**pytest 통합의 이점:**
+- **자동 테스트 발견**: `test_*.py` 패턴으로 테스트를 자동으로 찾아 실행
+- **파라미터화된 테스트**: 같은 테스트를 여러 모듈에 대해 반복 실행 가능
+- **명확한 리포팅**: 어떤 테스트가 통과했고 실패했는지 한눈에 확인
+- **CI/CD 통합 가능**: GitHub Actions 등과 연동하여 코드 커밋마다 자동 검증
+
+### 프로젝트 구조
+
+```
+tests/cocotb/
+├── test_runner.py           # Pytest 메인 러너
+├── tb_my_slave.py           # my_custom_slave 테스트벤치
+├── tb_stream_processor_avs.py # stream_processor 테스트벤치
+├── Makefile                 # Make 기반 빌드 (선택적)
+├── sim_models/
+│   └── altsyncram.v         # Altera IP 시뮬레이션 모델
+└── sim_build/               # 빌드 결과 (모듈별 독립 디렉토리)
+    ├── my_custom_slave/
+    │   ├── dump.vcd         # 파형 파일
+    │   └── results.xml      # 테스트 결과
+    └── stream_processor/
+        ├── dump.fst
+        └── results.xml
+```
+
+### 핵심 구현: test_runner.py
+
+**구조:**
+```python
+import os
+import pytest
+from cocotb_test.simulator import run
+
+@pytest.mark.parametrize("toplevel, module, sources", [
+    ("my_custom_slave", "tb_my_slave", [...]),
+    ("stream_processor", "tb_stream_processor_avs", [...])
+])
+def test_cocotb_modules(toplevel, module, sources):
+    """Pytest runner for Cocotb tests"""
+    sim_build = os.path.join("sim_build", toplevel)
+    run(
+        verilog_sources=sources,
+        toplevel=toplevel,
+        module=module,
+        simulator="icarus",
+        waves=True,
+        sim_build=sim_build,
+        results_xml=os.path.join(sim_build, "results.xml")
+    )
+```
+
+**핵심 설계 결정 사항:**
+
+1. **모듈별 독립 빌드 디렉토리**
+   - 각 테스트가 `sim_build/<모듈명>/` 폴더에서 독립 실행
+   - **이유:** 다른 테스트와 파일 충돌 방지 (`iverilog_dump.v` 같은 자동 생성 파일)
+   - **효과:** 병렬 실행 가능, 테스트 간 간섭 제거
+
+2. **파형 자동 생성 (`waves=True`)**
+   - VCD/FST 파형이 각 빌드 폴더에 자동 생성
+   - **활용:** GTKWave, VS Code Surfer로 시뮬레이션 결과 시각화
+   - **디버깅 핵심:** 타이밍 문제나 신호 전이를 눈으로 확인 가능
+
+3. **XML 결과 집중화**
+   - 테스트 결과를 각 빌드 폴더의 `results.xml`에 저장
+   - **이전 문제:** 루트 디렉토리에 무작위 XML이 계속 생성되어 지저분했음
+   - **해결:** 빌드 아티팩트를 깔끔하게 관리
+
+### 시뮬레이션 정밀도 문제 해결
+
+Cocotb를 Icarus Verilog과 사용하면서 다음과 같은 에러가 발생했습니다:
+
+```
+ValueError: Bad `period`: Unable to accurately represent 20(ns) with 
+the simulator precision of 1e0
+```
+
+**원인:** Verilog 파일에 `timescale`이 명시되지 않아 시뮬레이터가 기본 정밀도(1초)를 사용
+
+**해결:**
+```verilog
+`timescale 1ns / 1ps
+module stream_processor (...);
+```
+
+모든 RTL 파일(`stream_processor.v`, `my_slave.v`, `altsyncram.v`) 상단에 추가하여 나노초 단위 시뮬레이션 보장.
+
+### 안정적인 시뮬레이션 모델: altsyncram 개선
+
+Altera IP인 `altsyncram`은 Icarus Verilog에서 직접 시뮬레이션할 수 없습니다. 우리는 간단한 **Behavioral 모델**을 만들었고, 여러 번의 개선을 거쳤습니다.
+
+**초기 문제:**
+- 메모리를 초기화하지 않아 읽기 시 `X`(Unknown) 값 발생
+- 클럭 에지에서 메모리 읽기 시 신호 전이가 불안정
+
+**최종 구현:**
+```verilog
+reg [31:0] mem [0:255];
+
+// 메모리 초기화로 Unknown 상태 제거
+integer j;
+initial begin
+    for (j = 0; j < 256; j = j + 1)
+        mem[j] = 32'd0;
+end
+
+// 안정적인 읽기 로직 (중간 wire 사용)
+wire [31:0] q_b_next;
+assign q_b_next = mem[address_b];
+
+always @(posedge clock0) begin
+    q_b <= q_b_next;
+end
+```
+
+**개선 효과:**
+- 파형에서 빨간색 `X` 없이 깔끔한 신호
+- 클럭과 주소 변경 시점의 타이밍 모호함 제거
+
+### 자동화된 정리 시스템
+
+시뮬레이션 아티팩트(빌드 파일, 파형, XML)가 계속 쌓이는 문제를 방지하기 위해 **Makefile에 정리 타겟** 추가:
+
+```makefile
+.PHONY: pytest_clean
+pytest_clean:
+    rm -rf sim_build
+    rm -f *_results.xml results.xml
+```
+
+**사용법:**
+```bash
+make pytest_clean  # 모든 시뮬레이션 결과 삭제
+pytest             # 테스트 재실행
+```
+
+### 검증 예시: Avalon-MM 인터페이스
+
+**테스트벤치 (`tb_stream_processor_avs.py`):**
+```python
+@cocotb.test()
+async def test_avs_read_write(dut):
+    """Avalon-MM Slave 인터페이스 검증"""
+    
+    # 50MHz 클럭 생성
+    cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())
+    
+    # 리셋 후 레지스터 쓰기
+    await reset_dut(dut.reset_n, 40)
+    dut.avs_address.value = 0
+    dut.avs_write.value = 1
+    dut.avs_writedata.value = 0xDEADBEEF
+    await RisingEdge(dut.clk)
+    dut.avs_write.value = 0
+    
+    # 레지스터 읽기 및 검증
+    dut.avs_address.value = 0
+    dut.avs_read.value = 1
+    await RisingEdge(dut.clk)
+    dut.avs_read.value = 0
+    
+    await RisingEdge(dut.clk)  # readdatavalid 대기
+    readdata = int(dut.avs_readdata.value)
+    assert readdata == 0xDEADBEEF
+    assert dut.avs_readdatavalid.value == 1
+```
+
+**검증 포인트:**
+- ✅ 쓰기 후 정확한 값 읽기
+- ✅ `readdatavalid` 신호 1 사이클 지연 동작
+- ✅ 주소 디코딩 정상 작동
+
+### 실행 및 결과
+
+**테스트 실행:**
+```bash
+$ pytest test_runner.py -v
+======================== test session starts =========================
+test_runner.py::test_cocotb_modules[my_custom_slave] PASSED    [50%]
+test_runner.py::test_cocotb_modules[stream_processor] PASSED   [100%]
+==================== 2 passed in 0.81s ===============================
+```
+
+**생성된 파형 확인 (GTKWave):**
+```bash
+gtkwave sim_build/stream_processor/dump.vcd
+```
+
+### 모범 사례 및 교훈
+
+1. **초기부터 검증 환경 구축**
+   - RTL 작성과 동시에 테스트벤치 준비
+   - 나중에 추가하려면 훨씬 많은 시간 소요
+
+2. **파형은 필수, 옵션이 아님**
+   - 복잡한 타이밍 문제는 파형 없이 디버깅 불가능
+   - `waves=True`로 항상 파형 생성
+
+3. **시뮬레이션 모델의 품질이 중요**
+   - Unknown 상태나 불안정한 신호는 잘못된 테스트 결과로 이어짐
+   - Behavioral 모델도 실제 RTL처럼 신경 써서 작성
+
+4. **빌드 격리로 문제 예방**
+   - 모듈별 독립 디렉토리로 파일 충돌 원천 차단
+   - 병렬 테스트 실행 가능
+
+---
+
 ## 마무리하며
 
 이번 프로젝트를 통해 **Custom Instruction**과 **mSGDMA**, 그리고 **RTL 최적화**가 결합되었을 때 얼마나 강력한 성능(86배 속도 향상)을 낼 수 있는지 확인했습니다. 
 
-특히 단순히 "작동하는 코드"를 넘어, **엔디안 문제 해결**, **고정 소수점 연산 최적화**, **N단 파이프라인 설계** 등 실전 FPGA 설계에서 마주치는 핵심 과제들을 하나씩 정면 돌파했다는 점에서 큰 의미가 있습니다.
+특히 단순히 "작동하는 코드"를 넘어, **엔디안 문제 해결**, **고정 소수점 연산 최적화**, **N단 파이프라인 설계**, 그리고 **전문적인 Cocotb/pytest 검증 환경**까지 실전 FPGA 설계에서 마주치는 핵심 과제들을 하나씩 정면 돌파했다는 점에서 큰 의미가 있습니다.
 
 이 기록이 미래의 나, 혹은 이 시스템을 유지보수할 다른 동료에게 좋은 안내서가 되기를 바랍니다.
