@@ -13,11 +13,11 @@ def test_burst_master():
     print(f"RTL Dir: {rtl_dir}")
 
     run(
-        verilog_sources=[
-            os.path.join(rtl_dir, "burst_master.v"),
-            os.path.join(rtl_dir, "simple_fifo.v")
-        ],
-        toplevel="burst_master",
+        verilog_sources={
+            "burst_master": {"files": [os.path.join(rtl_dir, "simple_fifo.v"), os.path.join(rtl_dir, "burst_master.v")], "toplevel": "burst_master"},
+            "burst_master_2": {"files": [os.path.join(rtl_dir, "simple_fifo.v"), os.path.join(rtl_dir, "burst_master_2.v")], "toplevel": "burst_master_2"},
+            "burst_master_3": {"files": [os.path.join(rtl_dir, "simple_fifo.v"), os.path.join(rtl_dir, "burst_master_3.v")], "toplevel": "burst_master_3"}
+        },
         module="tb_burst_master",
         python_search=[
             tests_dir

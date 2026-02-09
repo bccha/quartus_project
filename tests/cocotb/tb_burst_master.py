@@ -265,11 +265,111 @@ async def test_burst_master_basic(dut):
     # 6. Verify Memory
     for i in range(0, TOTAL_BYTES, 4):
         addr = DST_ADDR + i
-        val = mem_model.mem.get(addr, 0xFFFFFFFF)
-        exp = expected_data[i//4]
-        if val != exp:
-             dut._log.error(f"Mismatch at 0x{addr:X}: Exp 0x{exp:X}, Got 0x{val:X}")
-             raise AssertionError(f"Mismatch at 0x{addr:X}: Exp 0x{exp:X}, Got 0x{val:X}")
-             
-    dut._log.info("Verification Successful!")
+        expected = expected_data[i // 4]
+        read_val = mem_model.mem.get(addr, 0)
+        
+        if read_val != expected:
+            raise AssertionError(f"Data Mismatch at {hex(addr)}: Expected {hex(expected)}, Got {hex(read_val)}")
+            
+    dut._log.info("Verification Complete!")
 
+@cocotb.test()
+async def test_burst_master_processing(dut):
+    """Test Burst Master 3 Processing Capabilities"""
+    
+    # Only run this test for burst_master_3
+    if dut._name != "burst_master_3":
+        dut._log.info(f"Skipping processing test for {dut._name}")
+        return
+
+    # 1. Clock Generation
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    
+    # 2. Reset
+    dut.reset_n.value = 0
+    dut.avs_write.value = 0
+    dut.avs_read.value = 0
+    dut.avs_address.value = 0
+    dut.avs_writedata.value = 0
+    dut.rm_waitrequest.value = 1
+    dut.wm_waitrequest.value = 1
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    dut.reset_n.value = 1
+    await RisingEdge(dut.clk)
+
+    # 3. Setup Memory Models
+    mem_model = AvalonMemory(dut, "MEM")
+    
+    # CSR Helper Functions
+    async def write_csr(address, data):
+        """Write to Avalon-MM CSR Slave"""
+        await RisingEdge(dut.clk)
+        dut.avs_address.value = address
+        dut.avs_write.value = 1
+        dut.avs_writedata.value = data
+        await RisingEdge(dut.clk)
+        dut.avs_write.value = 0
+        dut.avs_address.value = 0
+
+    async def read_csr(address):
+        """Read from Avalon-MM CSR Slave"""
+        await RisingEdge(dut.clk)
+        dut.avs_address.value = address
+        dut.avs_read.value = 1
+        await RisingEdge(dut.clk)
+        val = dut.avs_readdata.value
+        dut.avs_read.value = 0
+        return val
+
+    # Setup Source Memory
+    SRC_ADDR = 0x2000
+    DST_ADDR = 0x6000
+    BURST_SIZE = 256 
+    TOTAL_BYTES = BURST_SIZE * 4 # 1 Burst for simple test
+    COEFF = 3
+    
+    expected_data = []
+    for i in range(0, TOTAL_BYTES, 4):
+        val = i // 4 + 10 # Some Value
+        mem_model.mem[SRC_ADDR + i] = val
+        expected_data.append(val * COEFF) # Expected is Value * Coeff
+        
+    mem_model.start_read_monitor()
+    cocotb.start_soon(mem_model.write_monitor())
+    
+    # 4. Configure CSR with Coefficient
+    dut._log.info(f"Configuring CSR with Coeff = {COEFF}")
+    await write_csr(2, SRC_ADDR)
+    await write_csr(3, DST_ADDR)
+    await write_csr(4, TOTAL_BYTES)
+    await write_csr(5, COEFF) # Set Coeff
+    
+    # 5. Start
+    dut._log.info("Starting Transfer...")
+    await write_csr(0, 1) # Start
+    
+    # 6. Wait for Done
+    timeout = 5000
+    while True:
+        await RisingEdge(dut.clk)
+        timeout -= 1
+        if timeout % 10 == 0:
+            status = await read_csr(1)
+            if (int(status) & 1) == 1:
+                break
+        if timeout == 0:
+            raise AssertionError("Timeout waiting for Done")
+            
+    dut._log.info("Transaction Done! Verifying Data...")
+    
+    # 7. Verify Memory
+    for i in range(0, TOTAL_BYTES, 4):
+        addr = DST_ADDR + i
+        expected = expected_data[i // 4] & 0xFFFFFFFF # Truncate to 32-bit
+        read_val = mem_model.mem.get(addr, 0)
+        
+        if read_val != expected:
+            raise AssertionError(f"Data Mismatch at {hex(addr)}: Expected {hex(expected)}, Got {hex(read_val)}")
+            
+    dut._log.info("Processing Verification Complete!")

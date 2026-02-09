@@ -1,0 +1,9 @@
+wsl: Failed to translate 'D:\intelFPGA_lite\20.1\modelsim_ase\win32aloem'
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /mnt/c/Workspace/quartus_project/tests/cocotb
+plugins: cocotb-test-0.2.6
+collecting ... collected 4 items / 4 deselected / 0 selected
+
+============================ 4 deselected in 0.12s =============================
