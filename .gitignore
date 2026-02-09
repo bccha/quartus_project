@@ -57,7 +57,8 @@ Desktop.ini
 
 # Cocotb/Pytest Testing Artifacts
 tests/cocotb/sim_build/
-tests/cocotb/__pycache__/
-tests/cocotb/*.pyc
-tests/cocotb/*_results.xml
-tests/cocotb/results.xml
+**/__pycache__/
+**/.pytest_cache/
+*.pyc
+*.xml
+*.vcd

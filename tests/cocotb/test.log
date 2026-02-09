@@ -1,0 +1,8 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /mnt/c/Workspace/quartus_project/tests/cocotb
+plugins: cocotb-test-0.2.6
+collecting ... collected 3 items / 2 deselected / 1 selected
+
+test_runner.py::test_cocotb_modules[burst_processor-tb_burst_processor-sources2] 

@@ -1,0 +1,35 @@
+wsl: Failed to translate 'D:\intelFPGA_lite\20.1\modelsim_ase\win32aloem'
+/home/morer/.local/lib/python3.10/site-packages/cocotb_test/simulator.py:402: DeprecationWarning: Using kwargs is deprecated. Please explicitly declare or arguments instead.
+  super().__init__(*argv, **kwargs)
+WARNING cocotb: Skipping compilation:/mnt/c/Workspace/quartus_project/sim_build/burst_master.vvp
+INFO cocotb: Running command: vvp -M /home/morer/.local/lib/python3.10/site-packages/cocotb/libs -m libcocotbvpi_icarus /mnt/c/Workspace/quartus_project/sim_build/burst_master.vvp
+INFO cocotb:      -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.10.14 interpreter at /usr/bin/python3
+INFO cocotb:      -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered
+INFO cocotb:      0.00ns INFO     cocotb                             Running on Icarus Verilog version 11.0 (stable)
+INFO cocotb:      0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL
+INFO cocotb:      0.00ns INFO     cocotb                             Seeding Python random module with 1770671975
+INFO cocotb:      0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from /home/morer/.local/lib/python3.10/site-packages/cocotb
+INFO cocotb:      0.00ns INFO     cocotb                             Running tests
+INFO cocotb:      0.00ns INFO     cocotb.regression                  running tb_burst_master.test_burst_master_basic (1/1)
+INFO cocotb:                                                             Test Basic Burst Copy
+INFO cocotb:      0.00ns WARNING  py.warnings                        /mnt/c/Workspace/quartus_project/tests/tb_burst_master.py:111: DeprecationWarning: The 'units' argument has been renamed to 'unit'.
+INFO cocotb:                                                           clock = Clock(dut.clk, 10, units="ns")
+INFO cocotb:      0.00ns WARNING  ..er_basic.test_burst_master_basic Bad `period`: Unable to accurately represent 10(ns) with the simulator precision of 1e0
+INFO cocotb:                                                         Traceback (most recent call last):
+INFO cocotb:                                                           File "/mnt/c/Workspace/quartus_project/tests/tb_burst_master.py", line 111, in test_burst_master_basic
+INFO cocotb:                                                             clock = Clock(dut.clk, 10, units="ns")
+INFO cocotb:                                                           File "/home/morer/.local/lib/python3.10/site-packages/cocotb/clock.py", line 185, in __init__
+INFO cocotb:                                                             raise ValueError(f"Bad `period`: {e}") from None
+INFO cocotb:                                                         ValueError: Bad `period`: Unable to accurately represent 10(ns) with the simulator precision of 1e0
+INFO cocotb:      0.00ns WARNING  cocotb.regression                  tb_burst_master.test_burst_master_basic failed
+INFO cocotb:      0.00ns INFO     cocotb.regression                  *************************************************************************************************
+INFO cocotb:                                                         ** TEST                                     STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+INFO cocotb:                                                         *************************************************************************************************
+INFO cocotb:                                                         ** tb_burst_master.test_burst_master_basic   FAIL           0.00           0.01          0.00  **
+INFO cocotb:                                                         *************************************************************************************************
+INFO cocotb:                                                         ** TESTS=1 PASS=0 FAIL=1 SKIP=0                             0.00           0.02          0.00  **
+INFO cocotb:                                                         *************************************************************************************************
+ERROR cocotb: Failed: tb_burst_master::test_burst_master_basic
+FAILED 1 tests.
+Project Dir: /mnt/c/Workspace/quartus_project
+RTL Dir: /mnt/c/Workspace/quartus_project/RTL
