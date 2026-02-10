@@ -1,5 +1,7 @@
 # FPGA Project Verification: From Custom Slave to Hardware Acceleration
 
+[⬅️ Back to README](../README.md)
+
 **Date:** 2026-02-06
 **Project Path:** `c:/Workspace/quartus_project`
 

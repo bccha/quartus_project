@@ -1,5 +1,7 @@
 # Nios II 및 하드웨어 시스템 통합 가이드
 
+[⬅️ 메인 README로 돌아가기](../README.md) | [🇰🇷 한글 메인](./README_kor.md)
+
 ## 소프트웨어 제어 (CSR 활용)
 
 DMA 컨트롤러 하드웨어가 완성되면 Nios II 소프트웨어에서 이를 제어해야 합니다. `burst_master`는 CSR(Control Status Register) 인터페이스를 통해 제어됩니다.

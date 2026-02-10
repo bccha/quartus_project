@@ -1,5 +1,7 @@
 # PLL 동적 재설정 가이드 (Dynamic PLL Reconfiguration Guide)
 
+[⬅️ 메인 README로 돌아가기](../README.md) | [🇰🇷 한글 메인](./README_kor.md)
+
 DE10-Nano HDMI TX 프로젝트에서 해상도 변경 시 PLL을 동적으로 재설정하여 픽셀 클럭을 제어하는 방법을 정리한 문서입니다.
 
 ---

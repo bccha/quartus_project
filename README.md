@@ -14,6 +14,12 @@ For detailed implementation journey, design decisions, and technical deep-dive:
 - [🇺🇸 **English: Implementation Journey**](./doc/history.md)
 - [🇰🇷 **Korean: FPGA 프로젝트 검증**](./doc/history_kor.md)
 
+### 📖 Supplemental Docs
+- [🚀 **Nios II & DMA Acceleration Guide**](./doc/nios.md)
+- [📈 **Burst Master Optimization**](./doc/burst_master.md)
+- [🔄 **Dynamic PLL Reconfiguration**](./doc/pll.md)
+- [📝 **Project Roadmap (TODO)**](./doc/TODO.md)
+
 ### Read this in other languages
 - [🇰🇷 **한국어 (Korean)**](./doc/README_kor.md)
 
