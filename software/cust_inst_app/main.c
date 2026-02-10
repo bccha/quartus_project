@@ -346,16 +346,16 @@ void run_custom_instruction_test() {
 }
 
 int main() {
-  printf("Custom Instruction & DMA Test Application Start!\n");
+ // printf("Custom Instruction & DMA Test Application Start!\n");
 
-  // Check for timestamp timer (optional - continue without it)
-  if (alt_timestamp_start() < 0) {
-    printf("Warning: Timestamp timer not defined in BSP. Performance "
-           "measurements disabled.\n");
-  } else {
-    alt_u32 freq = alt_timestamp_freq();
-    printf("Timestamp Frequency: %lu Hz\n", freq);
-  }
+//  // Check for timestamp timer (optional - continue without it)
+//  if (alt_timestamp_start() < 0) {
+//    printf("Warning: Timestamp timer not defined in BSP. Performance "
+//           "measurements disabled.\n");
+//  } else {
+//    alt_u32 freq = alt_timestamp_freq();
+//    printf("Timestamp Frequency: %lu Hz\n", freq);
+//  }
 
   // Quick Hardware Version Check
   printf("\n=== Hardware Version Check ===\n");

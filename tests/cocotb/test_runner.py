@@ -38,6 +38,14 @@ PROJ_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
             os.path.join(PROJ_PATH, "RTL", "simple_fifo.v")
         ]
     ),
+    (
+        "burst_master_4", 
+        "tb_burst_master", 
+        [
+            os.path.join(PROJ_PATH, "RTL", "burst_master_4.v"),
+            os.path.join(PROJ_PATH, "RTL", "simple_fifo.v")
+        ]
+    ),
 ])
 def test_cocotb_modules(toplevel, module, sources):
     """Pytest runner for Cocotb tests"""

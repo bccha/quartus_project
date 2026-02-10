@@ -70,13 +70,13 @@ E       SystemExit: FAILED 1 tests.
 
 tests/cocotb/test_runner.py:53: SystemExit
 ------------------------------ Captured log call -------------------------------
-WARNING  cocotb:simulator.py:485 Skipping compilation:/mnt/c/Workspace/quartus_project/sim_build/burst_master_4/burst_master_4.vvp
+INFO     cocotb:simulator.py:295 Running command: iverilog -o /mnt/c/Workspace/quartus_project/sim_build/burst_master_4/burst_master_4.vvp -D COCOTB_SIM=1 -g2012 -s burst_master_4 -s iverilog_dump /mnt/c/Workspace/quartus_project/RTL/burst_master_4.v /mnt/c/Workspace/quartus_project/RTL/simple_fifo.v /mnt/c/Workspace/quartus_project/sim_build/burst_master_4/iverilog_dump.v
 INFO     cocotb:simulator.py:295 Running command: vvp -M /home/morer/.local/lib/python3.10/site-packages/cocotb/libs -m libcocotbvpi_icarus /mnt/c/Workspace/quartus_project/sim_build/burst_master_4/burst_master_4.vvp -fst
 INFO     cocotb:simulator.py:266      -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.10.14 interpreter at /usr/bin/python3
 INFO     cocotb:simulator.py:266      -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered
 INFO     cocotb:simulator.py:266      0.00ns INFO     cocotb                             Running on Icarus Verilog version 11.0 (stable)
 INFO     cocotb:simulator.py:266      0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL
-INFO     cocotb:simulator.py:266      0.00ns INFO     cocotb                             Seeding Python random module with 1770714901
+INFO     cocotb:simulator.py:266      0.00ns INFO     cocotb                             Seeding Python random module with 1770715032
 INFO     cocotb:simulator.py:266      0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from /home/morer/.local/lib/python3.10/site-packages/cocotb
 INFO     cocotb:simulator.py:266      0.00ns INFO     cocotb                             Running tests
 INFO     cocotb:simulator.py:266      0.00ns INFO     cocotb.regression                  running tb_burst_master.test_burst_master_basic (1/3)
@@ -92,33 +92,31 @@ INFO     cocotb:simulator.py:266   2700.00ns INFO     cocotb.burst_master_4     
 INFO     cocotb:simulator.py:266   2780.00ns INFO     cocotb.burst_master_4              [MEM] Write Start: Addr=0x5000, Len=256
 INFO     cocotb:simulator.py:266   5350.00ns INFO     cocotb.burst_master_4              [MEM] Write Start: Addr=0x5400, Len=256
 INFO     cocotb:simulator.py:266   8020.00ns INFO     cocotb.burst_master_4              Transaction Done! (Status Bit Set)
-INFO     cocotb:simulator.py:266   8040.00ns INFO     cocotb.burst_master_4              Verification Complete!
-INFO     cocotb:simulator.py:266   8040.00ns INFO     cocotb.regression                  tb_burst_master.test_burst_master_basic passed
+INFO     cocotb:simulator.py:266   8040.00ns WARNING  ..er_basic.test_burst_master_basic Data Mismatch at 0x5000: Expected 0xa000, Got 0x66
+INFO     cocotb:simulator.py:266                                                         Traceback (most recent call last):
+INFO     cocotb:simulator.py:266                                                           File "/mnt/c/Workspace/quartus_project/tests/cocotb/tb_burst_master.py", line 177, in test_burst_master_basic
+INFO     cocotb:simulator.py:266                                                             raise AssertionError(f"Data Mismatch at {hex(addr)}: Expected {hex(expected)}, Got {hex(read_val)}")
+INFO     cocotb:simulator.py:266                                                         AssertionError: Data Mismatch at 0x5000: Expected 0xa000, Got 0x66
+INFO     cocotb:simulator.py:266   8040.00ns WARNING  cocotb.regression                  tb_burst_master.test_burst_master_basic failed
 INFO     cocotb:simulator.py:266   8040.00ns INFO     cocotb.regression                  running tb_burst_master.test_burst_master_4_pipeline (2/3)
 INFO     cocotb:simulator.py:266                                                             Test Burst Master 4 Handshake Pipeline
 INFO     cocotb:simulator.py:266   8040.00ns WARNING  py.warnings                        /mnt/c/Workspace/quartus_project/tests/cocotb/tb_burst_master.py:190: DeprecationWarning: The 'units' argument has been renamed to 'unit'.
 INFO     cocotb:simulator.py:266                                                           clock = Clock(dut.clk, 10, units="ns")
 INFO     cocotb:simulator.py:266   8060.00ns INFO     cocotb.burst_master_4              Configuring CSR with Coeff = 3
-INFO     cocotb:simulator.py:266   8240.00ns INFO     cocotb.burst_master_4              [mem_model] Read Request Accepted: Addr=0x1000, Burst=64
-INFO     cocotb:simulator.py:266   8240.00ns INFO     cocotb.burst_master_4              [mem_model] Data Driver: Starting burst Addr=0x1000 Len=64
-INFO     cocotb:simulator.py:266   8260.00ns INFO     cocotb.burst_master_4              [mem_model] Read Request Accepted: Addr=0x1100, Burst=64
-INFO     cocotb:simulator.py:266   8280.00ns INFO     cocotb.burst_master_4              [mem_model] Read Request Accepted: Addr=0x1200, Burst=64
-INFO     cocotb:simulator.py:266   8300.00ns INFO     cocotb.burst_master_4              [mem_model] Read Request Accepted: Addr=0x1300, Burst=64
-INFO     cocotb:simulator.py:266   8890.00ns INFO     cocotb.burst_master_4              [mem_model] Data Driver: Starting burst Addr=0x1100 Len=64
-INFO     cocotb:simulator.py:266   8970.00ns INFO     cocotb.burst_master_4              [mem_model] Write Start: Addr=0x2000, Len=64
-INFO     cocotb:simulator.py:266   9540.00ns INFO     cocotb.burst_master_4              [mem_model] Data Driver: Starting burst Addr=0x1200 Len=64
-INFO     cocotb:simulator.py:266   9620.00ns INFO     cocotb.burst_master_4              [mem_model] Write Start: Addr=0x2100, Len=64
-INFO     cocotb:simulator.py:266  10190.00ns INFO     cocotb.burst_master_4              [mem_model] Data Driver: Starting burst Addr=0x1300 Len=64
-INFO     cocotb:simulator.py:266  10270.00ns INFO     cocotb.burst_master_4              [mem_model] Write Start: Addr=0x2200, Len=64
-INFO     cocotb:simulator.py:266  10920.00ns INFO     cocotb.burst_master_4              [mem_model] Write Start: Addr=0x2300, Len=64
-INFO     cocotb:simulator.py:266  11590.00ns WARNING  ..ine.test_burst_master_4_pipeline Mismatch at 0x2000: 1200 != 3
-INFO     cocotb:simulator.py:266                                                         assert 1200 == 3
-INFO     cocotb:simulator.py:266                                                         Traceback (most recent call last):
-INFO     cocotb:simulator.py:266                                                           File "/mnt/c/Workspace/quartus_project/tests/cocotb/tb_burst_master.py", line 331, in test_burst_master_4_pipeline
-INFO     cocotb:simulator.py:266                                                             assert read_val == expected, f"Mismatch at {hex(addr)}: {read_val} != {expected}"
-INFO     cocotb:simulator.py:266                                                         AssertionError: Mismatch at 0x2000: 1200 != 3
-INFO     cocotb:simulator.py:266                                                         assert 1200 == 3
-INFO     cocotb:simulator.py:266  11590.00ns WARNING  cocotb.regression                  tb_burst_master.test_burst_master_4_pipeline failed
+INFO     cocotb:simulator.py:266   8230.00ns INFO     cocotb.burst_master_4              [mem_model] Read Request Accepted: Addr=0x1000, Burst=64
+INFO     cocotb:simulator.py:266   8230.00ns INFO     cocotb.burst_master_4              [mem_model] Data Driver: Starting burst Addr=0x1000 Len=64
+INFO     cocotb:simulator.py:266   8250.00ns INFO     cocotb.burst_master_4              [mem_model] Read Request Accepted: Addr=0x1100, Burst=64
+INFO     cocotb:simulator.py:266   8270.00ns INFO     cocotb.burst_master_4              [mem_model] Read Request Accepted: Addr=0x1200, Burst=64
+INFO     cocotb:simulator.py:266   8290.00ns INFO     cocotb.burst_master_4              [mem_model] Read Request Accepted: Addr=0x1300, Burst=64
+INFO     cocotb:simulator.py:266   8880.00ns INFO     cocotb.burst_master_4              [mem_model] Data Driver: Starting burst Addr=0x1100 Len=64
+INFO     cocotb:simulator.py:266   8960.00ns INFO     cocotb.burst_master_4              [mem_model] Write Start: Addr=0x2000, Len=64
+INFO     cocotb:simulator.py:266   9530.00ns INFO     cocotb.burst_master_4              [mem_model] Data Driver: Starting burst Addr=0x1200 Len=64
+INFO     cocotb:simulator.py:266   9610.00ns INFO     cocotb.burst_master_4              [mem_model] Write Start: Addr=0x2100, Len=64
+INFO     cocotb:simulator.py:266  10180.00ns INFO     cocotb.burst_master_4              [mem_model] Data Driver: Starting burst Addr=0x1300 Len=64
+INFO     cocotb:simulator.py:266  10260.00ns INFO     cocotb.burst_master_4              [mem_model] Write Start: Addr=0x2200, Len=64
+INFO     cocotb:simulator.py:266  10910.00ns INFO     cocotb.burst_master_4              [mem_model] Write Start: Addr=0x2300, Len=64
+INFO     cocotb:simulator.py:266  11590.00ns INFO     cocotb.burst_master_4              Handshake Pipeline Verification Complete!
+INFO     cocotb:simulator.py:266  11590.00ns INFO     cocotb.regression                  tb_burst_master.test_burst_master_4_pipeline passed
 INFO     cocotb:simulator.py:266  11590.00ns INFO     cocotb.regression                  running tb_burst_master.test_programmable_burst (3/3)
 INFO     cocotb:simulator.py:266                                                             Test Programmable Burst Length (Read=64, Write=32)
 INFO     cocotb:simulator.py:266  11590.00ns INFO     cocotb.burst_master_4              Skipping programmable burst (addr map specific) for burst_master_4
@@ -126,14 +124,14 @@ INFO     cocotb:simulator.py:266  11590.00ns INFO     cocotb.regression         
 INFO     cocotb:simulator.py:266  11590.00ns INFO     cocotb.regression                  ******************************************************************************************************
 INFO     cocotb:simulator.py:266                                                         ** TEST                                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
 INFO     cocotb:simulator.py:266                                                         ******************************************************************************************************
-INFO     cocotb:simulator.py:266                                                         ** tb_burst_master.test_burst_master_basic        PASS        8040.00           0.11      74618.86  **
-INFO     cocotb:simulator.py:266                                                         ** tb_burst_master.test_burst_master_4_pipeline   FAIL        3550.00           0.04      79909.51  **
+INFO     cocotb:simulator.py:266                                                         ** tb_burst_master.test_burst_master_basic        FAIL        8040.00           0.12      69138.44  **
+INFO     cocotb:simulator.py:266                                                         ** tb_burst_master.test_burst_master_4_pipeline   PASS        3550.00           0.05      75497.56  **
 INFO     cocotb:simulator.py:266                                                         ** tb_burst_master.test_programmable_burst        PASS           0.00           0.00          0.00  **
 INFO     cocotb:simulator.py:266                                                         ******************************************************************************************************
-INFO     cocotb:simulator.py:266                                                         ** TESTS=3 PASS=2 FAIL=1 SKIP=0                              11590.00           0.17      69132.24  **
+INFO     cocotb:simulator.py:266                                                         ** TESTS=3 PASS=2 FAIL=1 SKIP=0                              11590.00           0.18      64738.56  **
 INFO     cocotb:simulator.py:266                                                         ******************************************************************************************************
 INFO     cocotb:simulator.py:266 FST info: dumpfile burst_master_4.fst opened for output.
-ERROR    cocotb:simulator.py:217 Failed: tb_burst_master::test_burst_master_4_pipeline
+ERROR    cocotb:simulator.py:217 Failed: tb_burst_master::test_burst_master_basic
 =============================== warnings summary ===============================
 tests/cocotb/test_runner.py::test_cocotb_modules[burst_master_4-tb_burst_master-sources4]
   /home/morer/.local/lib/python3.10/site-packages/cocotb_test/simulator.py:402: DeprecationWarning: Using kwargs is deprecated. Please explicitly declare or arguments instead.
@@ -142,4 +140,4 @@ tests/cocotb/test_runner.py::test_cocotb_modules[burst_master_4-tb_burst_master-
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
 FAILED tests/cocotb/test_runner.py::test_cocotb_modules[burst_master_4-tb_burst_master-sources4]
-================== 1 failed, 4 deselected, 1 warning in 0.71s ==================
+================== 1 failed, 4 deselected, 1 warning in 0.77s ==================

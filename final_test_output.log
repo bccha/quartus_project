@@ -1,0 +1,16 @@
+wsl: Failed to translate 'D:\intelFPGA_lite\20.1\modelsim_ase\win32aloem'
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: /mnt/c/Workspace/quartus_project
+plugins: cocotb-test-0.2.6
+collected 5 items / 4 deselected / 1 selected
+
+tests/cocotb/test_runner.py .                                            [100%]
+
+=============================== warnings summary ===============================
+tests/cocotb/test_runner.py::test_cocotb_modules[burst_master_4-tb_burst_master-sources4]
+  /home/morer/.local/lib/python3.10/site-packages/cocotb_test/simulator.py:402: DeprecationWarning: Using kwargs is deprecated. Please explicitly declare or arguments instead.
+    super().__init__(*argv, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 1 passed, 4 deselected, 1 warning in 0.67s ==================
