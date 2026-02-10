@@ -11,11 +11,11 @@ This project demonstrates high-performance FPGA design using **Custom Instructio
 ## 📚 Documentation
 
 For detailed implementation journey, design decisions, and technical deep-dive:
-- [🇺🇸 **English: Implementation Journey**](./history.md)
-- [🇰🇷 **Korean: FPGA 프로젝트 검증**](./history_kor.md)
+- [🇺🇸 **English: Implementation Journey**](./doc/history.md)
+- [🇰🇷 **Korean: FPGA 프로젝트 검증**](./doc/history_kor.md)
 
 ### Read this in other languages
-- [🇰🇷 **한국어 (Korean)**](./README_kor.md)
+- [🇰🇷 **한국어 (Korean)**](./doc/README_kor.md)
 
 ---
 
@@ -37,7 +37,7 @@ Parameterizable N-stage pipeline with robust backpressure handling.
 
 **Architecture:**
 
-![Pipeline Architecture](./images/pipeline_architecture_1770538269148.png)
+![Pipeline Architecture](./doc/images/pipeline_architecture_1770538269148.png)
 
 ```
 Stage 0: Input Capture & Endian Swap
@@ -53,7 +53,7 @@ Stage 2: Division Approximation & Final Endian Swap
 - **Reusable Template**: [pipe_template.v](./RTL/pipe_template.v) for future projects
 - **Timing Closure**: Maintains high throughput while meeting 50MHz+ timing
 
-![DPRAM Architecture](./images/image_dpram.png)
+![DPRAM Architecture](./doc/images/image_dpram.png)
 
 ### 3. **Modular Scatter-Gather DMA Integration**
 Disaggregated mSGDMA architecture with inline computation.
@@ -67,12 +67,12 @@ Disaggregated mSGDMA architecture with inline computation.
 
 ## 🏗️ System Architecture
 
-![System Architecture](./images/system_architecture_simd_1770584282890.png)
+![System Architecture](./doc/images/system_architecture_simd_1770584282890.png)
 
 
 ## 🚀 Performance Results
 
-![Performance Comparison](./images/performance_chart_1770538328314.png)
+![Performance Comparison](./doc/images/performance_chart_1770538328314.png)
 
 Benchmarks on Nios II @ 50MHz with 1000-element array processing:
 
@@ -146,8 +146,15 @@ quartus_project/
 │       └── altsyncram.v       # Behavioral Model
 │
 ├── custom_inst_qsys.qsys      # Platform Designer System
-├── history.md                 # Detailed Implementation Guide (EN)
-└── history_kor.md             # Detailed Implementation Guide (KR)
+├── doc/
+│   ├── burst_master.md        # Burst Master Documentation
+│   ├── history.md             # Detailed Implementation Guide (EN)
+│   ├── history_kor.md         # Detailed Implementation Guide (KR)
+│   ├── nios.md                # Nios II Implementation Details
+│   ├── pll.md                 # PLL Reconfiguration Details
+│   ├── README_kor.md          # Korean README
+│   └── TODO.md                # Project TODO List
+└── README.md                  # Main English README
 ```
 
 ---
@@ -228,7 +235,7 @@ end
 ## 📖 Learning Resources
 
 If you're new to FPGA or Nios II development, check out:
-1. **[history.md](./history.md)** - Complete design journey with rationale
+1. **[history.md](./doc/history.md)** - Complete design journey with rationale
 2. **[pipe_template.v](./RTL/pipe_template.v)** - Reusable pipeline template with detailed comments
 3. **Cocotb Tests** - See [tests/cocotb/](./tests/cocotb/) for verification examples
 

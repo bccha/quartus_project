@@ -15,7 +15,7 @@
 - [🇺🇸 **English: Implementation Journey**](./history.md)
 
 ### 다른 언어로 읽기
-- [🇺🇸 **English (영어)**](./README.md)
+- [🇺🇸 **English (영어)**](../README.md)
 
 ---
 
@@ -132,30 +132,16 @@ gtkwave tests/cocotb/sim_build/stream_processor/dump.vcd
 
 ```
 quartus_project/
-├── RTL/
-│   ├── stream_processor.v     # 3단 파이프라인 가속기
-│   ├── pipe_template.v        # 재사용 가능한 N단 템플릿
-│   ├── my_multi_calc.v        # 커스텀 인스트럭션 유닛
-│   ├── my_slave.v             # DPRAM 내장 Avalon-MM 슬레이브
-│   └── top_module.v           # 시스템 통합
-│
-├── ip/
-│   └── dpram.v                # 듀얼 포트 RAM (1KB)
-│
-├── software/
-│   └── cust_inst_app/
-│       └── main.c             # 벤치마크 & 테스트 애플리케이션
-│
-├── tests/cocotb/
-│   ├── test_runner.py         # Pytest 러너
-│   ├── tb_my_slave.py         # Avalon-MM 테스트벤치
-│   ├── tb_stream_processor_avs.py  # 파이프라인 테스트벤치
-│   └── sim_models/
-│       └── altsyncram.v       # Behavioral 모델
-│
 ├── custom_inst_qsys.qsys      # Platform Designer 시스템
-├── history.md                 # 상세 구현 가이드 (영문)
-└── history_kor.md             # 상세 구현 가이드 (한글)
+├── doc/
+│   ├── burst_master.md        # Burst Master 관련 문서
+│   ├── history.md             # 상세 구현 가이드 (영문)
+│   ├── history_kor.md         # 상세 구현 가이드 (한글)
+│   ├── nios.md                # Nios II 구현 세부 사항
+│   ├── pll.md                 # PLL 재설정 라이브러리 상세
+│   ├── README_kor.md          # 한글 README (현재 파일)
+│   └── TODO.md                # 프로젝트 TODO 리스트
+└── README.md                  # 영문 README
 ```
 
 ---

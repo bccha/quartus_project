@@ -179,13 +179,13 @@ void phase_shift_step(int direction) {
 
 클럭 엣지가 데이터 전환 시점과 겹치면 **Setup/Hold Violation** 발생
 
-![Bad Timing](images/bad_timing_diagram.png)
+![Bad Timing](./images/bad_timing_diagram.png)
 
 ### 해결 방법: Center-Aligned (안전)
 
 Phase Shift를 통해 클럭 엣지를 데이터의 안정 구간 중앙에 배치
 
-![Good Timing](images/good_timing_diagram.png)
+![Good Timing](./images/good_timing_diagram.png)
 
 ### HDMI TX에서의 응용
 
