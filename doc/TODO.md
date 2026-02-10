@@ -25,11 +25,22 @@ Transition from traditional testbenches to Python-based modern verification envi
 ## 2. Advanced Hardware Acceleration (SIMD)
 Build high-performance compute engines using parallel processing techniques.
 
-- [x] **Stream Processor Optimization**
+- [x] **Stream Processor & DMA Optimization**
     - [x] Implement 3-Stage Pipeline with Backpressure.
     - [x] Solve Endianness issues (Re-ordering 128-bit packed data).
     - [x] **128-bit SIMD Implementation**: 4-Lane Parallel Processing.
+    - [x] **Burst Master Evolution (BM1-BM4)**:
+        - [x] **BM1**: Basic Burst Copy (Avalon-MM Master with FIFO buffering).
+        - [x] **BM2**: Performance Optimization (**Back-to-Back Burst**, Pipelined Read).
+        - [x] **BM3**: Data Processing Pipeline (**Two-FIFO** architecture, Multiplication logic).
+        - [x] **BM4**: Robust Flow Control (**Valid-Ready Handshake**, Division Approximation).
+        - [x] Update Cocotb test suite for arithmetic verification and robust build management.
     - [x] Achieve >85x Speedup vs Software.
+
+- [x] **Documentation & Project Structure**
+    - [x] Centralize all documentation and images into the `doc/` directory.
+    - [x] Implement 2-way navigation links between all `.md` files for a "Technical Blog" experience.
+    - [x] Segregate Nios II/HPS specific details into `doc/nios.md`.
 
 ## 3. Image Processing Hardware
 Apply pipeline and DMA knowledge to real-time pixel processing.
