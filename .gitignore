@@ -56,6 +56,7 @@ Desktop.ini
 .DS_Store
 
 # Cocotb/Pytest Testing Artifacts
+/sim_build/
 tests/cocotb/sim_build/
 **/__pycache__/
 **/.pytest_cache/
