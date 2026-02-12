@@ -180,22 +180,16 @@ Read Burst 1 (100 cycles)
 ```
 
 **병렬 실행 (FIFO 있음)**:
+```
+           +-----------+-----------+-----------+
+Read:      |  Burst 1  |  Burst 2  |  Burst 3  | ...
+           +-----------+-----------+-----------+
+                  +-----------+-----------+-----------+
+Write:            |  Burst 1  |  Burst 2  |  Burst 3  | ...
+                  +-----------+-----------+-----------+
 
-
-```mermaid
-gantt
-    title Parallel Execution Concept
-    dateFormat  X
-    axisFormat %s
-    section Read Domain
-    Read Burst 1    : r1, 0, 100
-    Read Burst 2    : r2, after r1, 100
-    Read Burst 3    : r3, after r2, 100
-    section Write Domain
-    Read Delay      : m1, 0, 50
-    Write Burst 1   : w1, after m1, 100
-    Write Burst 2   : w2, after w1, 100
-    Write Burst 3   : w3, after w2, 100
+전체 시간: ~100 cycles + (100 cycles * N bursts)
+(첫 Burst의 Read 지연 후 모든 작업이 병렬로 겹침)
 ```
 
 **성능 향상**: 거의 **2배** (이론적으로)
@@ -388,20 +382,20 @@ end
 
 ### 전체 전송 과정 (1KB 전송 예시)
 
-```mermaid
-gantt
-    title 1KB Burst Transfer Timing
-    dateFormat  X
-    axisFormat %s
-    
-    section Read Master
-    IDLE/Wait FIFO : r_idle, 0, 10
-    Read Command   : active, r_cmd, after r_idle, 10
-    section Data valid
-    Data Receive   : r_data, after r_cmd, 40
-    section Write Master
-    IDLE/Wait Data : w_idle, 0, 50
-    Write Burst    : active, w_burst, after w_idle, 60
+```
+Cycle:      0    10   20   30   40   50   60   70   80   90   100  110
+            |    |    |    |    |    |    |    |    |    |    |    |
+Start:      +--------------------------------------------------------
+            |
+RM_State:   |IDLE|WAIT|READ|WAIT| ...
+RM_Read:    -----|====|----------------------------------------------
+            
+RDV:        ----------|======================================(256)---
+            
+FIFO Used:  ----------0-1-2-3---------------------------255-254------
+                                                        (Write 시작)
+WM_State:   |   IDLE   |      W_WAIT_DATA       |      W_BURST       |
+WM_Write:   ------------------------------------|====================
 ```
 
 **주요 이벤트**:
@@ -416,24 +410,20 @@ gantt
 
 ### Pending Reads 동작
 
-```mermaid
-gantt
-    title Pending Reads & FIFO Used
-    dateFormat  X
-    axisFormat %s
-    
-    section Read Master
-    Offset         : m_off, 0, 5
-    Burst Req #1   : crit, req1, after m_off, 5
-    Quiet          : m_q, after req1, 5
-    Burst Req #2   : crit, req2, after m_q, 5
-    
-    section Pending
-    Pending (256)  : p1, after req1, 10
-    Pending (512)  : p2, after req2, 10
-    
-    section FIFO
-    FIFO Used (Data): fill, 20, 15
+```
+Cycle:      0    5    10   15   20   25   30
+            |    |    |    |    |    |    |
+Burst Req:       +----     +----
+                 (Req#1)   (Req#2)
+
+Pending:    0---------256-------512--511--510--509--
+                      |         |    |    |    |
+                      |         |    +----+----+--- 데이터 도착 (-1)
+                      |         +------------------ Req#2 수락 (+256)
+                      +---------------------------- Req#1 수락 (+256)
+
+FIFO Used:  0------------------------1----2----3----
+                                     +----+----+--- 데이터 저장
 ```
 
 **설명**:
