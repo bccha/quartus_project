@@ -213,18 +213,16 @@ For this, we introduced the **Modular SGDMA** architecture. This method enables 
 
 #### Architecture Changes
 *   **Existing (Standard SGDMA)**: `Read Master` and `Write Master` are tied inside. (For simple copy purposes)
-*   **New (Modular SGDMA)**: Separated into three independent components.
-    1.  **mSGDMA Dispatcher**: Receives commands (Descriptor) from Nios II and controls Read/Write Master.
-    2.  **mSGDMA Read Master**: Reads data from memory and sends it to **Avalon-ST Source**.
-    3.  **mSGDMA Write Master**: Receives data with **Avalon-ST Sink** and writes to memory.
+*   **New (Simplified Modular SGDMA)**: Consists of 2 independent master components (each master has its own internal Dispatcher/Descriptor logic).
+    1.  **mSGDMA Read Master**: Reads data from memory and sends it to **Avalon-ST Source**, receiving descriptors directly from Nios II.
+    2.  **mSGDMA Write Master**: Receives data via **Avalon-ST Sink** and writes to memory, receiving descriptors directly from Nios II.
 
 #### Platform Designer Implementation Guide
 We completed the streaming pipeline by configuring it in Platform Designer (Qsys) as follows:
 
 1.  **Add Components**:
-    *   `Modular SGDMA Dispatcher`: Connect the CSR interface to the Nios II data master.
-    *   `Modular SGDMA Read Master`: Connect the memory map master to source memory, and the streaming source (`Data Source`) to the processor.
-    *   `Modular SGDMA Write Master`: Connect the memory map master to destination memory, and the streaming sink (`Data Sink`) to the processor.
+    *   `Modular SGDMA Read Master`: Connect the descriptor_slave port to the Nios II data master, the memory map master to source memory, and the streaming source (`Data Source`) to the processor.
+    *   `Modular SGDMA Write Master`: Connect the descriptor_slave port to the Nios II data master, the memory map master to destination memory, and the streaming sink (`Data Sink`) to the processor.
 2.  **Stream Processor Connection (Core)**:
     *   `Read Master.Source` Connects to `Stream Processor.Sink`
     *   `Stream Processor.Source` Connects to `Write Master.Sink`
@@ -426,8 +424,8 @@ The actual implementation process of **Modular SGDMA**, which inserts operation 
 
 ### 1. Limits of HAL Driver: `NULL` Device Pointer
 *   **Problem**: The standard `alt_msgdma_open()` command kept returning `NULL`.
-*   **Cause**: The `altera_msgdma` HAL driver provided by Intel expects a "Standard mSGDMA" configuration where **Dispatcher + Read Master + Write Master** are tied as one complete package. However, since we untied and connected each as independent components to insert operation logic, the software failed to recognize it as one integrated DMA device.
-*   **Solution**: We boldly gave up calling high-level HAL APIs and chose a method to directly fire commands to the **CSR (Control Status Register)** of the Dispatcher using `IOWR` macros. The interface became a bit rough, but we were able to perfectly control the hardware.
+*   **Cause**: The `altera_msgdma` HAL driver provided by Intel expects a "Standard mSGDMA" configuration where **Dispatcher + Read Master + Write Master** are tied as one complete package. However, since we placed the Read/Write Masters independently to insert operation logic, the software failed to recognize it as one integrated DMA device.
+*   **Solution**: We boldly gave up calling high-level HAL APIs and chose a method to directly fire commands to the **CSR/Descriptor Slave** of each Master using `IOWR` macros. The interface became a bit rough, but we were able to perfectly control the hardware.
 
 ### 2. Trap of Qsys Settings: Operating Mode (Mode)
 *   **Problem**: DMA transfer appeared as completed (`BUSY=0`), but the result memory was still `0` (`Act=0`) or previous data remained.
@@ -441,11 +439,11 @@ The actual implementation process of **Modular SGDMA**, which inserts operation 
 
 ### 4. Hardware "Freeze" Prevention: Software Reset
 *   **Problem**: During testing, if an error occurred or forced termination was made, the DMA often did not respond in the next execution.
-*   **Solution**: Added a **Dispatcher software reset** sequence at the beginning of the `main.c` test function.
+*   **Solution**: Added a **software reset sequence for each Master** at the beginning of the `main.c` test function.
     ```c
-    // Reset Dispatcher to a clean state
-    IOWR_ALTERA_MSGDMA_CSR_CONTROL(BASE, ALTERA_MSGDMA_CSR_RESET_MASK);
-    while (IORD_ALTERA_MSGDMA_CSR_STATUS(BASE) & ALTERA_MSGDMA_CSR_RESET_STATE_MASK);
+    // Reset Read/Write Masters to a clean state
+    IOWR_ALTERA_MSGDMA_CSR_CONTROL(DMA_READ_BASE, ALTERA_MSGDMA_CSR_RESET_MASK);
+    IOWR_ALTERA_MSGDMA_CSR_CONTROL(DMA_WRITE_BASE, ALTERA_MSGDMA_CSR_RESET_MASK);
     ```
     We confirmed again that making hardware always in a "predictable state" software-wise is the core of embedded programming.
 

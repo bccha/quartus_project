@@ -216,18 +216,16 @@ Nios II 프로세서가 다재다능하긴 하지만, 대용량 버퍼 데이터
 
 #### 아키텍처 변경 사항
 *   **Existing (Standard SGDMA)**: `Read Master`와 `Write Master`가 내부에 묶여 있음. (단순 복사 용도)
-*   **New (Modular SGDMA)**: 3개의 독립된 컴포넌트로 분리.
-    1.  **mSGDMA Dispatcher**: Nios II의 명령(Descriptor)을 받아 Read/Write Master를 제어.
-    2.  **mSGDMA Read Master**: 메모리에서 데이터를 읽어 **Avalon-ST Source**로 내보냄.
-    3.  **mSGDMA Write Master**: **Avalon-ST Sink**로 데이터를 받아 메모리에 씀.
+*   **New (Simplified Modular SGDMA)**: 2개의 독립된 마스터 컴포넌트로 구성 (각 마스터가 자체 Dispatcher/Descriptor 로직 내장).
+    1.  **mSGDMA Read Master**: 메모리에서 데이터를 읽어 **Avalon-ST Source**로 내보내며, Nios II로부터 직접 디스크립터를 받음.
+    2.  **mSGDMA Write Master**: **Avalon-ST Sink**로 데이터를 받아 메모리에 쓰며, Nios II로부터 직접 디스크립터를 받음.
 
 #### Platform Designer 구현 가이드
 Platform Designer(Qsys)에서 다음과 같이 구성하여 스트리밍 파이프라인을 완성했습니다:
 
 1.  **컴포넌트 추가**:
-    *   `Modular SGDMA Dispatcher`: CSR 인터페이스를 Nios II 데이터 마스터에 연결.
-    *   `Modular SGDMA Read Master`: 메모리 맵 마스터는 소스 메모리에, 스트리밍 소스(`Data Source`)는 프로세서에 연결.
-    *   `Modular SGDMA Write Master`: 메모리 맵 마스터는 목적지 메모리에, 스트리밍 싱크(`Data Sink`)는 프로세서에 연결.
+    *   `Modular SGDMA Read Master`: descriptor_slave 포트를 Nios II 데이터 마스터에 연결하고, Data Master는 소스 메모리에, 스트리밍 소스(`Data Source`)는 프로세서에 연결.
+    *   `Modular SGDMA Write Master`: descriptor_slave 포트를 Nios II 데이터 마스터에 연결하고, Data Master는 목적지 메모리에, 스트리밍 싱크(`Data Sink`)는 프로세서에 연결.
 2.  **Stream Processor 연결 (핵심)**:
     *   `Read Master.Source` Connects to `Stream Processor.Sink`
     *   `Stream Processor.Source` Connects to `Write Master.Sink`
@@ -448,8 +446,8 @@ Stream Processing Done. Cycles: 1636 (Time: 32 us)
 
 ### 1. HAL 드라이버의 한계: `NULL` 장치 포인터
 *   **문제**: 표준 `alt_msgdma_open()` 명령이 계속 `NULL`을 리턴했습니다.
-*   **원인**: 인텔이 제공하는 `altera_msgdma` HAL 드라이버는 **Dispatcher + Read Master + Write Master**가 하나의 완전한 패키지로 묶여 있는 "Standard mSGDMA" 구성을 기대합니다. 하지만 우리는 연산 로직을 끼우기 위해 각각을 독립적인 컴포넌트로 풀어서 연결했기 때문에, 소프트웨어가 이를 통합된 하나의 DMA 장치로 인식하지 못한 것입니다.
-*   **해결**: 상위 수준의 HAL API 호출을 과감히 포기하고, `IOWR` 매크로를 이용해 Dispatcher의 **CSR(Control Status Register)**에 직접 명령을 쏘는 방식을 택했습니다. 인터페이스가 조금 투박해졌지만, 하드웨어를 완벽하게 제어할 수 있게 되었습니다.
+*   **원인**: 인텔이 제공하는 `altera_msgdma` HAL 드라이버는 **Dispatcher + Read Master + Write Master**가 하나의 완전한 패키지로 묶여 있는 "Standard mSGDMA" 구성을 기대합니다. 하지만 우리는 연산 로직을 끼우기 위해 Read/Write Master를 독립적으로 배치했기 때문에, 소프트웨어가 이를 통합된 하나의 DMA 장치로 인식하지 못한 것입니다.
+*   **해결**: 상위 수준의 HAL API 호출을 과감히 포기하고, `IOWR` 매크로를 이용해 각 Master의 **CSR/Descriptor Slave**에 직접 명령을 쏘는 방식을 택했습니다. 인터페이스가 조금 투박해졌지만, 하드웨어를 완벽하게 제어할 수 있게 되었습니다.
 
 ### 2. Qsys 설정의 함정: 동작 모드 (Mode)
 *   **문제**: DMA 전송은 완료(`BUSY=0`)되었다고 뜨는데, 결과 메모리는 여전히 `0`이거나(`Act=0`), 이전 데이터가 남아 있었습니다.
@@ -463,11 +461,11 @@ Stream Processing Done. Cycles: 1636 (Time: 32 us)
 
 ### 4. 하드웨어 "먹통" 방지: 소프트웨어 리셋
 *   **문제**: 테스트 도중 에러가 나거나 강제 종료하면, 다음 실행 시 DMA가 응답하지 않는 현상이 잦았습니다.
-*   **해결**: `main.c`의 테스트 함수 초반부에 **Dispatcher 소프트웨어 리셋** 시퀀스를 추가했습니다.
+*   **해결**: `main.c`의 테스트 함수 초반부에 **각 Master의 소프트웨어 리셋** 시퀀스를 추가했습니다.
     ```c
-    // Dispatcher를 깨끗한 상태로 리셋
-    IOWR_ALTERA_MSGDMA_CSR_CONTROL(BASE, ALTERA_MSGDMA_CSR_RESET_MASK);
-    while (IORD_ALTERA_MSGDMA_CSR_STATUS(BASE) & ALTERA_MSGDMA_CSR_RESET_STATE_MASK);
+    // Read/Write Master를 깨끗한 상태로 리셋
+    IOWR_ALTERA_MSGDMA_CSR_CONTROL(DMA_READ_BASE, ALTERA_MSGDMA_CSR_RESET_MASK);
+    IOWR_ALTERA_MSGDMA_CSR_CONTROL(DMA_WRITE_BASE, ALTERA_MSGDMA_CSR_RESET_MASK);
     ```
     하드웨어를 소프트웨어적으로 항상 "예측 가능한 상태"로 만드는 것이 임베디드 프로그래밍의 핵심임을 다시 확인했습니다.
 
