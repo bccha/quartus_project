@@ -14,7 +14,7 @@
 9. [burst_master_3: 데이터 처리 파이프라인 추가](#burst_master_3-데이터-처리-파이프라인-추가)
 10. [기능 확장: Programmable Burst Length](#기능-확장-programmable-burst-length)
 11. [burst_master_4: Multi-Cycle Pipeline (Handshake)](#burst_master_4-multi-cycle-pipeline-handshake)
-12. [추가 학습 자료](#추가-학습-資料)
+12. [추가 학습 자료](#추가-학습-자료)
 13. [실전 개발 팁: 시뮬레이션 및 디버깅](#실전-개발-팁-시뮬레이션-및-디버깅)
 
 ---
@@ -908,7 +908,7 @@ end
 
 ### 사용 예 (Software)
 
-Nios II 또는 기타 프로세서에서 CSR 레지스터를 통해 DMA를 제어하는 상세한 방법과 예제 코드는 [nios.md](file:///c:/Workspace/quartus_project/nios.md)를 참고하세요.
+Nios II 또는 기타 프로세서에서 CSR 레지스터를 통해 DMA를 제어하는 상세한 방법과 예제 코드는 [nios.md](./nios.md)를 참고하세요.
 
 ### 요약
 
@@ -945,11 +945,11 @@ Nios II 또는 기타 프로세서에서 CSR 레지스터를 통해 DMA를 제�
 
 Nios II 및 HPS DDR 연동과 같은 하드웨어 시스템 통합에 관한 내용은 별도의 가이드에서 다룹니다.
 
-- [Nios II 및 HPS DDR 통합 가이드 (nios.md)](file:///c:/Workspace/quartus_project/nios.md)
+- [Nios II 및 HPS DDR 통합 가이드 (nios.md)](./nios.md)
 
 ---
 
-## 10. 기능 확장: Programmable Burst Length
+## 기능 확장: Programmable Burst Length
 
 ### 배경 및 필요성
 
@@ -1027,7 +1027,7 @@ ctrl_len <= (avs_writedata + ((ctrl_rd_burst*4)-1)) & ~((ctrl_rd_burst*4)-1);
 
 ---
 
-## 11. burst_master_4: Multi-Cycle Pipeline (Handshake)
+## burst_master_4: Multi-Cycle Pipeline (Handshake)
 
 ### 개요
 
@@ -1098,14 +1098,14 @@ end
 
 ---
 
-## 12. 추가 학습 자료
+## 추가 학습 자료
 
 - `burst_master_4.v`: 설명된 Valid-Ready Handshake 로직이 구현된 RTL 코드입니다.
   - `gen_ready` 블록과 `pipeline_valid/data` 업데이트 로직을 중점적으로 확인하세요.
 
 ---
 
-## 13. 실전 개발 팁: 시뮬레이션 및 디버깅
+## 실전 개발 팁: 시뮬레이션 및 디버깅
 
 ### 시뮬레이션 결과 반영이 안 될 때 (Build Cache 문제)
 

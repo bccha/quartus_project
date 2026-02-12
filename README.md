@@ -17,6 +17,7 @@ For detailed implementation journey, design decisions, and technical deep-dive:
 ### 📖 Supplemental Docs
 - [🚀 **Nios II & DMA Acceleration Guide**](./doc/nios.md)
 - [📈 **Burst Master Optimization**](./doc/burst_master.md)
+- [🌊 **Stream Processor Pipeline**](./doc/STREAM.md)
 - [🔄 **Dynamic PLL Reconfiguration**](./doc/pll.md)
 - [📝 **Project Roadmap (TODO)**](./doc/TODO.md)
 
