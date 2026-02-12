@@ -181,19 +181,21 @@ Read Burst 1 (100 cycles)
 
 **병렬 실행 (FIFO 있음)**:
 
+
 ```mermaid
 gantt
     title Parallel Execution Concept
     dateFormat  X
     axisFormat %s
     section Read Domain
-    Read Burst 1    :active, r1, 0, 100
-    Read Burst 2    :active, r2, 100, 200
-    Read Burst 3    :active, r3, 200, 300
+    Read Burst 1    : r1, 0, 100
+    Read Burst 2    : r2, after r1, 100
+    Read Burst 3    : r3, after r2, 100
     section Write Domain
-    Write Burst 1   :w1, 50, 150
-    Write Burst 2   :w2, 150, 250
-    Write Burst 3   :w3, 250, 350
+    Read Delay      : m1, 0, 50
+    Write Burst 1   : w1, after m1, 100
+    Write Burst 2   : w2, after w1, 100
+    Write Burst 3   : w3, after w2, 100
 ```
 
 **성능 향상**: 거의 **2배** (이론적으로)
@@ -393,13 +395,13 @@ gantt
     axisFormat %s
     
     section Read Master
-    IDLE/Wait FIFO :0, 10
-    Read Command   :active, r_cmd, 10, 20
+    IDLE/Wait FIFO : r_idle, 0, 10
+    Read Command   : active, r_cmd, after r_idle, 10
     section Data valid
-    Data Receive   :r_data, 20, 60
+    Data Receive   : r_data, after r_cmd, 40
     section Write Master
-    IDLE/Wait Data :0, 50
-    Write Burst    :active, w_burst, 50, 110
+    IDLE/Wait Data : w_idle, 0, 50
+    Write Burst    : active, w_burst, after w_idle, 60
 ```
 
 **주요 이벤트**:
@@ -421,15 +423,17 @@ gantt
     axisFormat %s
     
     section Read Master
-    Burst Req #1   :crit, req1, 5, 10
-    Burst Req #2   :crit, req2, 15, 20
+    Offset         : m_off, 0, 5
+    Burst Req #1   : crit, req1, after m_off, 5
+    Quiet          : m_q, after req1, 5
+    Burst Req #2   : crit, req2, after m_q, 5
     
     section Pending
-    Pending (256)  :p1, 10, 20
-    Pending (512)  :p2, 20, 30
+    Pending (256)  : p1, after req1, 10
+    Pending (512)  : p2, after req2, 10
     
     section FIFO
-    FIFO Used (Data):fill, 20, 35
+    FIFO Used (Data): fill, 20, 15
 ```
 
 **설명**:
